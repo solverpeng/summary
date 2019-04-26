@@ -1,8 +1,6 @@
-# # summary
+# GO语言
 
-## GO语言
-
-## GO基础知识
+## 基础知识
 
 1. [搭建开发环境](https://github.com/solverpeng/summary/tree/master/docs/go/go-basic/00#%E6%90%AD%E5%BB%BA%E5%BC%80%E5%8F%91%E7%8E%AF%E5%A2%83)
 2. [GO命令、关键字、注释、程序结构、package、访问规则](https://github.com/solverpeng/summary/tree/master/docs/go/go-basic/01#go%E5%91%BD%E4%BB%A4%E5%85%B3%E9%94%AE%E5%AD%97%E6%B3%A8%E9%87%8A%E7%A8%8B%E5%BA%8F%E7%BB%93%E6%9E%84package%E8%AE%BF%E9%97%AE%E8%A7%84%E5%88%99)
