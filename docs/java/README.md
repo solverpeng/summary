@@ -15,4 +15,5 @@
 
 1. [相对路径和绝对路径](https://github.com/solverpeng/summary/blob/8be0f436928a738f6b8a880088feb01d66d815e2/docs/java/java-web-basic/00/README.md#%E7%9B%B8%E5%AF%B9%E8%B7%AF%E5%BE%84%E5%92%8C%E7%BB%9D%E5%AF%B9%E8%B7%AF%E5%BE%84)
 2. 防止表单重复提交
+3. 自定义JSTL标签和函数库
 
