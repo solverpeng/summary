@@ -294,7 +294,7 @@ public class MyWebAppInitializer2 extends AbstractDispatcherServletInitializer {
 
 
 
-## 异常
+## 异常解析
 
 如果在请求映射或者请求处理的过程中抛出异常，`DispatcherServlet`会委托`HandlerExceptionResolver`链去处理异常，提供解决方案，通常是返回一个错误的响应。
 
@@ -319,7 +319,7 @@ MVC Config自动声明内置的解析器，用于默认的Spring MVC异常，包
 
 
 
-## 容器错误页面
+## 错误页面
 
 如果任何`HandlerExceptionResolver`仍然无法解析异常，那么它将会将响应状态设置为错误状态（4xx，5xx），Servlet容器渲染一个默认的错误页面。要自定义容器中默认的错误页面，可以在`web.xml`中声明一个错误页面映射。如下：
 
@@ -367,7 +367,7 @@ Spring MVC定义了`ViewResolver`和`View`接口，允许在浏览器中渲染�
 | FreeMarkerViewResolver         | `UrlBasedViewResolver`的子类，支持`FreeMarkerView`及其自定义子类。 |
 | ContentNegotiatingViewResolver | 实现`ViewResolver`接口，该接口根据请求文件名或`Accept`标头解析视图。 |
 
-### 处理
+### 视图处理
 
 可以通过声明多个`view resolver`形成`iew resolver`链，如果有必要，可以通过设置`order`属性来制定排序，`order`属性值越高，优先级越低。
 
@@ -389,13 +389,49 @@ Spring MVC定义了`ViewResolver`和`View`接口，允许在浏览器中渲染�
 
 这将创建一个`InternalResoureView`，将会执行`RequestDispatcher#forward`方法。因此此前缀对于`InternalResoureViewResolver`和`InternalResourceView`不太有用，但如果使用其他视图技术，且强制使用Servlet/JSP引擎处理，则此前缀会有帮助。注意，也可以连接多哦视图解析器。
 
-### Content Negotiation
-...
 
-## Locale
-1. Header Resolver
-2. Cookie Resolver
-3. Session Resolver
+
+## Multipart 解析器
+
+`org.springframework.web.multipart.MultipartResolver` 用来解决多文件上传的问题。其中一个实现是基于`Apache Commons FileUpload`，另一个是基于`Serlvet 3.0 `多部分请求解析。
+
+启用`multipart handling`，需要在`DispatchaerServlet`所在的Spring配置文件中使用`multipartResolver`的名称声明`MultipartResolver bean`。`DispatcherServlet`检测到它并将其传入请求。当接收到内容类型为`multipart/form-data`且请求方法为`POST`，`resolver`将解析内容并将当前`httpservletrequest`包装为`multipartttpservletrequest`，以提供对已解析部分的访问，同时将它们公开为请求参数。
+
+
+
+### Apache Commons FileUpload
+
+要使用`Apache Commons FileUpload`，需要配置一个名为`multipartResolver`，类型为`CommonsMultipartResolver`的Bean。同时需要添加`commons-fileupload`的依赖。
+
+### Servlet 3.0
+
+通过Servlet容器配置启用Servlet 3.0多部分解析。做法如下：
+
+- Java中，在Servlet 注册时设置`MultipartConfigElement `。
+- web.xml中，添加一个`<multipart-config>`添加到servlet声明中。
+
+设置`MultipartConfigElement`如下：
+
+```java
+public class AppInitializer extends AbstractAnnotationConfigDispatcherServletInitializer {
+
+    // ...
+
+    @Override
+    protected void customizeRegistration(ServletRegistration.Dynamic registration) {
+
+        // Optionally also set maxFileSize, maxRequestSize, fileSizeThreshold
+        registration.setMultipartConfig(new MultipartConfigElement("/tmp"));
+    }
+
+}
+```
+
+配置完成后，添加名为`MultipartResolver`，类型为`StandardServletMultipartResolver`的Bean。
+
+
+
+
 
 
 
