@@ -5,6 +5,20 @@
 
 
 1. DispatcherServlet
+   - 层次结构
+   - 特殊的BEAN类型
+   - WEB MVC配置
+   - Servlet配置
+   - 请求处理
+   - 拦截
+   - 异常解析
+   - 错误页面
+   - 视图解析
+     - 视图处理
+     - 重定向
+     - 转发
+   - Multipart 解析器
+   - 日志
 2. 过滤器
 3. 注解
 4. URI 链接

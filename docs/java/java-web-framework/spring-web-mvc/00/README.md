@@ -2,8 +2,6 @@
 
 `Spring MVC` 和其他 web 框架类似，围绕着一个前控制器设计了一个中央 `Servlet`，即`DispatcherServlet`。
 
-
-
 和其他`Servlet`类似，`DispatcherServlet`也需要根据 Servlet 规范声明和映射使用 Java 配置或是配置在 web.xml中。相反的，`DispatcherServlet`使用 Spring 配置发现它需要的各种组件，如：请求映射/视图解析/异常处理等等。
 
 初始化`DispatcherServlet`的两种方式：
@@ -428,6 +426,49 @@ public class AppInitializer extends AbstractAnnotationConfigDispatcherServletIni
 ```
 
 配置完成后，添加名为`MultipartResolver`，类型为`StandardServletMultipartResolver`的Bean。
+
+
+
+## 日志
+
+Spring MVC 中DEBUG级别的日志被设计成紧凑的、最小且友好的。它关注的是一次又一次有用的高价值信息，而其他信息仅在调试特定问题时才有用。
+
+TRACE级别的日志遵循和DEBUG相同的原则，但可以用于调试任何问题。此外，一些日志消息可能在TRACE与DEBUG中显示不同的详细程度。
+
+### 日志中敏感数据
+
+DEBUG和TRACE级别的日志可能会记录敏感信息。这就是默认情况下屏蔽请求参数和标头的原因，并且必须通过DispatcherServlet上的enableLoggingRequestDetails属性显式启用它们的完整日志记录。
+
+下面的例子展示在JAVA配置类中如何做：
+
+```java
+public class MyInitializer
+        extends AbstractAnnotationConfigDispatcherServletInitializer {
+
+    @Override
+    protected Class<?>[] getRootConfigClasses() {
+        return ... ;
+    }
+
+    @Override
+    protected Class<?>[] getServletConfigClasses() {
+        return ... ;
+    }
+
+    @Override
+    protected String[] getServletMappings() {
+        return ... ;
+    }
+
+    @Override
+    protected void customizeRegistration(Dynamic registration) {
+        registration.setInitParameter("enableLoggingRequestDetails", "true");
+    }
+
+}
+```
+
+
 
 
 
