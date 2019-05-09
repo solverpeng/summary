@@ -1,4 +1,4 @@
-# Servlet 编码设置
+# Servlet 编码解码
 
 ## HTTP Get 请求编码解码过程
 
