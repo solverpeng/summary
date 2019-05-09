@@ -17,8 +17,8 @@
 2. [防止表单重复提交](https://github.com/solverpeng/summary/blob/31a0ee0ea1192479fcc4e7a6cddfef4bb95bb50c/docs/java/java-web-basic/01/README.md#%E9%98%B2%E6%AD%A2%E8%A1%A8%E5%8D%95%E9%87%8D%E5%A4%8D%E6%8F%90%E4%BA%A4)
 3. [自定义JSTL标签和函数库](https://github.com/solverpeng/summary/blob/31a0ee0ea1192479fcc4e7a6cddfef4bb95bb50c/docs/java/java-web-basic/02/README.md#%E8%87%AA%E5%AE%9A%E4%B9%89jstl%E6%A0%87%E7%AD%BE%E5%92%8C%E5%87%BD%E6%95%B0%E5%BA%93)
 4. [servlet/filter/listener/interceptor](servlet/filter/listener/interceptor)
-5. Servlet 编码解码
-6. 
+5. [Servlet 编码解码](https://github.com/solverpeng/summary/blob/3eeefbef66574dca016f2715f31240886b5aff59/docs/java/java-web-basic/04/README.md#servlet-%E7%BC%96%E7%A0%81%E8%A7%A3%E7%A0%81)
+6. [URL匹配规则](https://github.com/solverpeng/summary/blob/3eeefbef66574dca016f2715f31240886b5aff59/docs/java/java-web-basic/05/README.md#url%E5%8C%B9%E9%85%8D%E8%A7%84%E5%88%99)
 
 
 
