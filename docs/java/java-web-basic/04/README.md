@@ -48,16 +48,12 @@
 1. `GET`是URL解码的方式。默认解码格式是`tomcat`编码格式。
 2. `POST`是实体内容解码方式。默认解码方式是`request`容器编码格式。与`tomcat`编码方式无关。
 
-
-
 ## Http 响应编码设置
 
 1. `response.setContentType`：指定`HTTP`响应的编码,同时指定了浏览器显示的编码。
 2. `response.setCharacterEncoding`：指定服务端编码格式，并告知客户端解码时的编码码格式。
 3. 调用上面这两个方法，必须在`getWriter`执行之前或者`response`被提交之前。
 4. `response.setCharacterEncoding`不会覆盖`response.setContentType`设置。它两一个是编码一个是解码。
-
-
 
 ## SpringMVC编码设置
 
@@ -140,7 +136,6 @@ public class CharacterEncodingFilter extends OncePerRequestFilter {
 ```
 
 配置如下：
-
 ```xml
 <filter>
 	<filter-name>encodingFilter</filter-name>
