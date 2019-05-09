@@ -47,3 +47,117 @@
 
 1. `GET`是URL解码的方式。默认解码格式是`tomcat`编码格式。
 2. `POST`是实体内容解码方式。默认解码方式是`request`容器编码格式。与`tomcat`编码方式无关。
+
+
+
+## Http 响应编码设置
+
+1. `response.setContentType`：指定`HTTP`响应的编码,同时指定了浏览器显示的编码。
+2. `response.setCharacterEncoding`：指定服务端编码格式，并告知客户端解码时的编码码格式。
+3. 调用上面这两个方法，必须在`getWriter`执行之前或者`response`被提交之前。
+4. `response.setCharacterEncoding`不会覆盖`response.setContentType`设置。它两一个是编码一个是解码。
+
+
+
+## SpringMVC编码设置
+
+`SpringMVC`提供了`org.springframework.web.filter.CharacterEncodingFilter`来统一编码。
+
+```java
+public class CharacterEncodingFilter extends OncePerRequestFilter {
+    @Nullable
+    private String encoding;
+    private boolean forceRequestEncoding;
+    private boolean forceResponseEncoding;
+
+    public CharacterEncodingFilter() {
+        this.forceRequestEncoding = false;
+        this.forceResponseEncoding = false;
+    }
+
+    public CharacterEncodingFilter(String encoding) {
+        this(encoding, false);
+    }
+
+    public CharacterEncodingFilter(String encoding, boolean forceEncoding) {
+        this(encoding, forceEncoding, forceEncoding);
+    }
+
+    public CharacterEncodingFilter(String encoding, boolean forceRequestEncoding, boolean forceResponseEncoding) {
+        this.forceRequestEncoding = false;
+        this.forceResponseEncoding = false;
+        Assert.hasLength(encoding, "Encoding must not be empty");
+        this.encoding = encoding;
+        this.forceRequestEncoding = forceRequestEncoding;
+        this.forceResponseEncoding = forceResponseEncoding;
+    }
+
+    public void setEncoding(@Nullable String encoding) {
+        this.encoding = encoding;
+    }
+
+    @Nullable
+    public String getEncoding() {
+        return this.encoding;
+    }
+
+    public void setForceEncoding(boolean forceEncoding) {
+        this.forceRequestEncoding = forceEncoding;
+        this.forceResponseEncoding = forceEncoding;
+    }
+
+    public void setForceRequestEncoding(boolean forceRequestEncoding) {
+        this.forceRequestEncoding = forceRequestEncoding;
+    }
+
+    public boolean isForceRequestEncoding() {
+        return this.forceRequestEncoding;
+    }
+
+    public void setForceResponseEncoding(boolean forceResponseEncoding) {
+        this.forceResponseEncoding = forceResponseEncoding;
+    }
+
+    public boolean isForceResponseEncoding() {
+        return this.forceResponseEncoding;
+    }
+
+    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
+        String encoding = this.getEncoding();
+        if (encoding != null) {
+            if (this.isForceRequestEncoding() || request.getCharacterEncoding() == null) {
+                request.setCharacterEncoding(encoding);
+            }
+
+            if (this.isForceResponseEncoding()) {
+                response.setCharacterEncoding(encoding);
+            }
+        }
+
+        filterChain.doFilter(request, response);
+    }
+}
+```
+
+配置如下：
+
+```xml
+<filter>
+	<filter-name>encodingFilter</filter-name>
+	<filter-class>org.springframework.web.filter.CharacterEncodingFilter</filter-class>
+	<init-param>
+		<param-name>encoding</param-name>
+		<param-value>UTF-8</param-value>
+	</init-param>
+	<init-param>
+		<param-name>forceEncoding</param-name>
+		<param-value>true</param-value>
+	</init-param>
+</filter>
+<filter-mapping>
+	<filter-name>encodingFilter</filter-name>
+	<url-pattern>/*</url-pattern>
+</filter-mapping>
+```
+
+[关于URL编码](http://www.ruanyifeng.com/blog/2010/02/url_encoding.html)
