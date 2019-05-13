@@ -164,3 +164,8 @@ HTTP响应也由四个部分组成，分别是：状态行、消息报头、空�
 
 用来告知客户端应该如何解码才能获取在`Content-Type`中标示的媒体类型。
 
+
+
+[菜鸟教程](https://www.runoob.com/http/http-messages.html)
+
+[MDN web docs](https://developer.mozilla.org/zh-CN/docs/Web/HTTP/Headers)
