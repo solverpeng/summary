@@ -1,0 +1,55 @@
+# HTTP响应状态码
+
+- 100 Continue
+  - 表示目前为止一切正常, 客户端应该继续请求, 如果已完成请求则忽略。
+- 101 切换协议
+  - 表示服务器应客户端升级协议的请求（`Upgrade`请求头）正在进行协议切换。服务器会发送一个`Upgrade`)响应头来表示其正在切换过去的协议。
+- 200 OK
+  - 状态码 **200 OK** 表明请求已经成功. 默认情况下状态码为200的响应可以被缓存。
+- 201 Created
+  - 表示请求已经被成功处理，并且创建了新的资源。
+- 202 Accepted
+  - 表示服务器端已经收到请求消息，但是尚未进行处理。
+- 203 Non-Authoritative Information
+- 204 No Content
+- 205 Reset Content
+- 206 Partial Content
+- 300 Multiple Choices
+- 301 Moved Permanently
+- 302 Found
+- 303 See Other
+- 304 Not Modified
+- 307 Temporary Redirect
+- 308 Permanent Redirect
+- 400 Bad Request
+- 401 Unauthorized
+- 403 Forbidden
+- 404 Not Found
+- 405 Method Not Allowed
+- 406 Not Acceptable
+- 407 Proxy Authentication Required
+- 408 Request Timeout
+- 409 Conflict
+- 410 Gone
+- 411 Length Required
+- 412 Precondition Failed（先决条件失败）
+- 413 Payload Too Large
+- 414 URI Too Long
+- 415 Unsupported Media Type
+- 416 Range Not Satisfiable
+- 417 Expectation Failed
+- 418 I'm a teapot
+- 422 Unprocessable Entity
+- 425 Too Early
+- 426 Upgrade Required
+- 428 Precondition Required
+- 429 Too Many Requests
+- 431 Request Header Fields Too Large
+- 451 Unavailable For Legal Reasons
+- 500 内部服务器错误
+- 501 Not Implemented
+- 502 Bad Gateway
+- 503 Service Unavailable
+- 504 Gateway Timeout
+- 505 HTTP Version Not Supported
+- 511 Network Authentication Required
