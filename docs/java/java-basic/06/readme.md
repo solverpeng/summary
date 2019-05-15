@@ -254,6 +254,8 @@ boolean isBefore(Instant otherInstant);
 int compareTo(Instant otherInstant);
 ```
 
+[测试Demo项目地址](https://github.com/solverpeng/java-code/blob/master/java-basic/java8-date-time/src/main/java/com/solverpeng/java8/InstantAPI.java)
+
 ## Duration
 
 表示一个时间段。
@@ -286,6 +288,8 @@ Duration plus(long amountToAdd, TemporalUnit unit);		  //加多长时间
 Duration minus(long amountToSubtract, TemporalUnit unit); //减多长时间
 ```
 
+[测试Demo项目地址](https://github.com/solverpeng/java-code/blob/master/java-basic/java8-date-time/src/main/java/com/solverpeng/java8/DurationAPI.java)
+
 ## Period
 
 也表示一段时间，但是是以年月日来衡量的，如2年3个月6天。只表示年月日周。
@@ -315,6 +319,8 @@ Period plusMonths(long monthsToAdd);
 Period plusDays(long daysToAdd);
 ```
 
+[测试Demo项目地址](https://github.com/solverpeng/java-code/blob/master/java-basic/java8-date-time/src/main/java/com/solverpeng/java8/PeriodApi.java)
+
 ## 格式化 DateTimeFormatter
 
 ```java
@@ -331,6 +337,8 @@ DateTimeFormatter.ISO_LOCAL_TIME;			//19:36:47.195
 String format(TemporalAccessor temporal); //将日期时间转换为字符串
 TemporalAccessor parse(CharSequence text);//将字符串转换为日期时间
 ```
+
+[测试Demo项目地址](https://github.com/solverpeng/java-code/blob/master/java-basic/java8-date-time/src/main/java/com/solverpeng/java8/DateFormatterAPI.java)
 
 ## Date与LocalDateTime\LocalDate\LocalTime互转
 
