@@ -1,22 +1,20 @@
 # Java8日期时间
 
-旧得日期类java.util.Date新增了很多过期方法，新的日期类java.time.LocalDate/LocalTime/LocalDateTime，新的日期类提供了静态初始化方法、日期时间加减方法、年月日周星期时分秒的操作以及覆盖、格式化、比较、相差等方法。
-
-
+旧得日期类java.util.Date新增了很多过期方法，新的日期类java.time.LocalDate/LocalTime/LocalDateTime，新的日期类提供了静态初始化方法、日期时间加减方法、年月日周星期时分秒的操作以及覆盖、格式化、比较、相差等方法。也有表示时间戳的 Instant，以及表示时间段的 Duration和Period。
 
 ## Date
 
 Java8中的 java.util.Date类除去过期的方法，有如下可用的API：
 
 ```java
-Date();				  	//构造器，获取当前时间
-Date(long date);	  	//通过时间戳初始化日期
-getTime();			  	//获取时间戳
-before(Date date);	  	//日期比较
-after(Date date);	  	//日期比较
-compareTo(Date date); 	//日期比较
-from(Instant instant);	//新的日期类转为旧的日期类
-toInstant();		  	//旧的日期类转为新的日期类
+Date();				  //构造器，获取当前时间
+Date(long date);	  //通过时间戳初始化日期
+getTime();			  //获取时间戳
+before(Date date);	  //日期比较
+after(Date date);	  //日期比较
+compareTo(Date date); //日期比较
+from(Instant instant);//新的日期类转为旧的日期类
+toInstant();		  //旧的日期类转为新的日期类
 ```
 
 [测试Demo项目地址](https://github.com/solverpeng/java-code/blob/master/java-basic/java8-date-time/src/main/java/com/solverpeng/java8/DateAPI.java)
@@ -32,6 +30,7 @@ LocalDate LocalDate#of(2019, 12, 30); 			//初始化一个日期
 LocalDate LocalDate#parse("2019-10-23");		//通过字符串初始化日期
 LocalDate LocalDate#ofYearDay(2019, 222);		//通过指定年和第n天来初始化日期
 LocalDate ofEpochDay(long epochDay);			//距离1970年多少天来初始化日期
+LocalDate from(TemporalAccessor var0);			//通过TemporalAccessor创建日期
 ```
 
 ```java
@@ -107,12 +106,10 @@ Period until(ChronoLocalDate endDateExclusive);
 
 ```java
 //1970-01-01
-long toEpochDay();	//距离1970-01-01多少天
+long toEpochDay();										//距离1970-01-01多少天
 ```
 
 [测试Demo项目地址](https://github.com/solverpeng/java-code/blob/cf89bbfddee35954c55d50c7c9f6f3407d9a2899/java-basic/java8-date-time/src/main/java/com/solverpeng/java8/LocalDateAPI.java)
-
-
 
 ## 日期时间
 
@@ -125,6 +122,7 @@ LocalDateTime of(int year, Month month, int dayOfMonth, int hour, int minute);
 LocalDateTime of(int year, Month month, int dayOfMonth, int hour, int minute, int second);
 LocalDateTime parse(CharSequence text);
 LocalDateTime parse(CharSequence text, DateTimeFormatter formatter);
+LocalDateTime from(TemporalAccessor var0);
 ```
 
 ```java
@@ -225,13 +223,114 @@ int compareTo(LocalTime other);
 
 ## Instant
 
+Instant表示一个时间戳，与我们常使用的`System.currentTimeMillis()`有些类似，不过`Instant`可以精确到纳秒。`Instant`除了使用`now()`方法创建外，还可以通过`ofEpochSecond`方法创建。有如下API：
 
+```java
+// 实例化方法
+Instant now();
+Instant ofEpochSecond(long epochSecond);
+Instant ofEpochMilli(long epochMilli);
+```
 
+```java
+//获取
+long getEpochSecond();
+int getNano();
+```
 
+```java
+//加减
+Instant plusSeconds(long secondsToAdd);
+Instant plusMillis(long millisToAdd);
+Instant plusNanos(long nanosToAdd);
+Instant minusMillis(long millisToSubtract);
+Instant minusNanos(long nanosToSubtract);
+```
 
+```java
+//比较
+boolean isAfter(Instant otherInstant);
+boolean isBefore(Instant otherInstant);
+int compareTo(Instant otherInstant);
+```
 
+## Duration
 
+表示一个时间段。
 
+```java
+// 创建
+Duration between(Temporal startInclusive, Temporal endExclusive);
+Duration of(long amount, TemporalUnit unit);
+Duration ofDays(long days);
+Duration ofHours(long hours);
+Duration ofMinutes(long minutes);
+Duration ofSeconds(long seconds);
+Duration ofMillis(long millis);
+Duration ofNanos(long nanos);
+```
+
+```java
+// 获取
+long toDays();			// 这段时间的总天数
+long toHours();			// 这段时间的小时数
+long toMinutes();		// 这段时间的分钟数
+BigDecimal toSeconds(); // 这段时间的秒数
+long toMillis();		// 这段时间的毫秒数
+long toNanos();			// 这段时间的纳秒数
+```
+
+```java
+//加减
+Duration plus(long amountToAdd, TemporalUnit unit);		  //加多长时间
+Duration minus(long amountToSubtract, TemporalUnit unit); //减多长时间
+```
+
+## Period
+
+也表示一段时间，但是是以年月日来衡量的，如2年3个月6天。只表示年月日周。
+
+```java
+//创建
+Period between(LocalDate startDateInclusive, LocalDate endDateExclusive);
+Period of(int years, int months, int days);
+Period ofYears(int years);
+Period ofMonths(int months);
+Period ofWeeks(int weeks);
+Period ofDays(int days);
+```
+
+```java
+//获取
+int getYears();
+int getMonths();
+int getDays();
+long get(TemporalUnit unit);
+```
+
+```java
+//加减
+Period plusYears(long yearsToAdd);
+Period plusMonths(long monthsToAdd);
+Period plusDays(long daysToAdd);
+```
+
+## 格式化 DateTimeFormatter
+
+```java
+// 创建模式
+DateTimeFormatter ofPattern(String pattern);
+// 默认提供的几种模式
+DateTimeFormatter.ISO_LOCAL_DATE;			//yyyy-MM-dd
+DateTimeFormatter.ISO_LOCAL_DATE_TIME;		//2019-05-15T19:36:02.672
+DateTimeFormatter.ISO_LOCAL_TIME;			//19:36:47.195
+```
+
+```java
+//格式化
+String format(TemporalAccessor temporal); //将日期时间转换为字符串
+TemporalAccessor parse(CharSequence text);//将字符串转换为日期时间
+```
 
 ## Date与LocalDateTime\LocalDate\LocalTime互转
 
