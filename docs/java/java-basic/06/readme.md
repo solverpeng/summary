@@ -17,9 +17,7 @@ from(Instant instant);//新的日期类转为旧的日期类
 toInstant();		  //旧的日期类转为新的日期类
 ```
 
-
-
-
+[测试Demo项目地址](https://github.com/solverpeng/java-code/blob/master/java-basic/java8-date-time/src/main/java/com/solverpeng/java8/DateAPI.java)
 
 ## 日期
 
@@ -110,13 +108,116 @@ Period until(ChronoLocalDate endDateExclusive);
 long toEpochDay();										//距离1970-01-01多少天
 ```
 
+[测试Demo项目地址](https://github.com/solverpeng/java-code/blob/cf89bbfddee35954c55d50c7c9f6f3407d9a2899/java-basic/java8-date-time/src/main/java/com/solverpeng/java8/LocalDateAPI.java)
+
+
+
+## 日期时间
+
+Java8中 java.time包中提供了新的日期类，LocalDateTime。表示一个具体的日期，有如下API：
+
+```java
+//实例化日期时间
+LocalDateTime now();
+LocalDateTime of(int year, Month month, int dayOfMonth, int hour, int minute);
+LocalDateTime of(int year, Month month, int dayOfMonth, int hour, int minute, int second);
+LocalDateTime parse(CharSequence text);
+LocalDateTime parse(CharSequence text, DateTimeFormatter formatter);
+```
+
+```java
+//日期时间转换，获取年月日时分秒
+LocalDate toLocalDate();
+LocalTime toLocalTime();
+
+int getYear();
+int getMonthValue();
+Month getMonth();
+int getDayOfMonth();
+int getDayOfYear();
+DayOfWeek getDayOfWeek();
+int getHour();
+int getMinute();
+int getSecond();
+int getNano();
+```
+
+```java
+//日期时间加减
+LocalDateTime plusYears(long years);
+LocalDateTime plusMonths(long months);
+LocalDateTime minusYears(long years);
+LocalDateTime minusMonths(long months);
+```
+
+```java
+//拷贝覆盖
+LocalDateTime withYear(int year);
+LocalDateTime withMonth(int month);
+```
+
+```java
+//比较
+int compareTo(ChronoLocalDateTime<?> other);
+boolean isAfter(ChronoLocalDateTime<?> other);
+boolean isBefore(ChronoLocalDateTime<?> other);
+```
+
+```java
+//格式化
+String format(DateTimeFormatter formatter);
+```
+
+```java
+//相差
+long until(Temporal endExclusive, TemporalUnit unit);
+```
+
 ## 时间
 
+Java8中 java.time包中提供了新的日期类，LocalTime。表示一个具体的时间，有如下API：
 
+```java
+//实例化时间
+LocalTime now();												//当前时间
+LocalTime of(int hour, int minute);								//指定时分时间
+LocalTime of(int hour, int minute, int second);					//指定时分秒时间
+LocalTime parse(CharSequence text);								//通过字符串初始化
+LocalTime parse(CharSequence text, DateTimeFormatter formatter);//通过字符串和指定格式初始化
+```
 
-## 时间日期
+```java
+//时间加减
+LocalTime plus(TemporalAmount amountToAdd);
+LocalTime plus(long amountToAdd, TemporalUnit unit);
+LocalTime plusHours(long hoursToAdd);
+LocalTime plusMinutes(long minutesToAdd);
+LocalTime plusSeconds(long secondstoAdd);
+LocalTime minus(long amountToSubtract, TemporalUnit unit);
+LocalTime minusHours(long hoursToSubtract);
+LocalTime minusMinutes(long minutesToSubtract);
+```
 
+```java
+//时间覆盖
+LocalTime with(TemporalAdjuster var1);
+LocalTime with(TemporalField var1, long var2);
+LocalTime withHour(int var1);						//覆盖小时
+LocalTime withMinute(int var1);						//覆盖分
+LocalTime withSecond(int var1);						//覆盖秒
+```
 
+```java
+//格式化
+String format(DateTimeFormatter formatter);
+```
+
+```java
+//时间比较
+int compareTo(LocalTime other);
+```
+
+[测试Demo项目地址](https://github.com/solverpeng/java-code/blob/master/java-basic/java8-date-time/src/main/java/com/solverpeng/java8/LocalTimeAPI.java)
 
 
 
