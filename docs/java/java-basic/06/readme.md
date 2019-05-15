@@ -9,14 +9,14 @@
 Java8中的 java.util.Date类除去过期的方法，有如下可用的API：
 
 ```java
-Date();				  //构造器，获取当前时间
-Date(long date);	  //通过时间戳初始化日期
-getTime();			  //获取时间戳
-before(Date date);	  //日期比较
-after(Date date);	  //日期比较
-compareTo(Date date); //日期比较
-from(Instant instant);//新的日期类转为旧的日期类
-toInstant();		  //旧的日期类转为新的日期类
+Date();				  	//构造器，获取当前时间
+Date(long date);	  	//通过时间戳初始化日期
+getTime();			  	//获取时间戳
+before(Date date);	  	//日期比较
+after(Date date);	  	//日期比较
+compareTo(Date date); 	//日期比较
+from(Instant instant);	//新的日期类转为旧的日期类
+toInstant();		  	//旧的日期类转为新的日期类
 ```
 
 [测试Demo项目地址](https://github.com/solverpeng/java-code/blob/master/java-basic/java8-date-time/src/main/java/com/solverpeng/java8/DateAPI.java)
@@ -107,7 +107,7 @@ Period until(ChronoLocalDate endDateExclusive);
 
 ```java
 //1970-01-01
-long toEpochDay();										//距离1970-01-01多少天
+long toEpochDay();	//距离1970-01-01多少天
 ```
 
 [测试Demo项目地址](https://github.com/solverpeng/java-code/blob/cf89bbfddee35954c55d50c7c9f6f3407d9a2899/java-basic/java8-date-time/src/main/java/com/solverpeng/java8/LocalDateAPI.java)
