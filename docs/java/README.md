@@ -9,8 +9,13 @@
 5. [反射](https://github.com/solverpeng/summary/blob/8be0f436928a738f6b8a880088feb01d66d815e2/docs/java/java-basic/04/README.md)
 6. [JSON](https://github.com/solverpeng/summary/blob/8be0f436928a738f6b8a880088feb01d66d815e2/docs/java/java-basic/05/README.md#json)
 7. [Java8日期和时间](https://github.com/solverpeng/summary/blob/5740622bb6a18b8dce59dadad0cbdb1cfd0b0d9a/docs/java/java-basic/06/readme.md#java8%E6%97%A5%E6%9C%9F%E6%97%B6%E9%97%B4)
-
-
+8. 集合
+   - Collection
+     - ArrayList源码解析
+     - LinkedList源码解析
+   - Map
+     - HashSet源码解析
+     - HashMap源码解析
 
 ## JAVA WEB基础
 
