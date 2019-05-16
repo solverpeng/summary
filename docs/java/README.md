@@ -10,8 +10,8 @@
 6. [JSON](https://github.com/solverpeng/summary/blob/8be0f436928a738f6b8a880088feb01d66d815e2/docs/java/java-basic/05/README.md#json)
 7. [Java8日期和时间](https://github.com/solverpeng/summary/blob/5740622bb6a18b8dce59dadad0cbdb1cfd0b0d9a/docs/java/java-basic/06/readme.md#java8%E6%97%A5%E6%9C%9F%E6%97%B6%E9%97%B4)
 8. 集合
-   - Collection
-     - ArrayList源码解析
+   - [Collection](https://github.com/solverpeng/summary/blob/4da1f3eefc160cd32ec4f7d114f3e299766cfacf/docs/java/java-basic/collections/collection/readme.md#collection)
+     - [ArrayList源码解析](https://github.com/solverpeng/summary/blob/4da1f3eefc160cd32ec4f7d114f3e299766cfacf/docs/java/java-basic/collections/collection/00/readme.md#arraylist%E6%BA%90%E7%A0%81%E8%A7%A3%E6%9E%90)
      - LinkedList源码解析
    - Map
      - HashSet源码解析

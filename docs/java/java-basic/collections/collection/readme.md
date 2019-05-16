@@ -10,7 +10,7 @@
 
 ![](https://xiaozhang-image.oss-cn-shanghai.aliyuncs.com/github/java-summary/java-basic/Java%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/%E9%9B%86%E5%90%88/array.png)
 
-###特点
+### 特点
 
 - 继承于AbstractList，实现了List、RandomAccess接口，动态的 Object 数组
 - 初始容量大小为10，扩容因子为1.5（`oldCapacity + (oldCapacity >> 1)`）

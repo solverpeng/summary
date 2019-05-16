@@ -51,8 +51,7 @@ public ArrayList(int initialCapacity) {
         this.elementData = EMPTY_ELEMENTDATA;
     } else {
     	// 如果传入的初始容量小于0，抛出异常
-        throw new IllegalArgumentException("Illegal Capacity: "+
-                                           initialCapacity);
+        throw new IllegalArgumentException("Illegal Capacity: "+ initialCapacity);
     }
 }
 ```
