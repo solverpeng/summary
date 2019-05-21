@@ -241,6 +241,21 @@ E elementData(int index) {
 1. 检查索引是否越界，这里只检查是否越上界，如果越上界抛出IndexOutOfBoundsException异常，如果越下界抛出的是ArrayIndexOutOfBoundsException异常。
 2. 返回索引位置处的元素；
 
+### set(int index, E element)方法
+
+替换指定索引位置的元素,返回旧值
+
+```java
+public E set(int index, E element) {
+    //检查是否越界
+    rangeCheck(index);
+
+    E oldValue = elementData(index);
+    elementData[index] = element;
+    return oldValue;
+}
+```
+
 ### remove(int index)方法
 
 删除指定索引位置的元素，时间复杂度为O(n)。
@@ -409,11 +424,35 @@ elementData定义为transient的优势，自己根据size序列化真实的元�
 ## 总结
 
 1. ArrayList内部使用数组存储元素，当数组长度不够时进行扩容，每次加一半的空间，ArrayList不会进行缩容；
+
 2. ArrayList支持随机访问，通过索引访问元素极快，时间复杂度为O(1)；
+
 3. ArrayList添加元素到尾部极快，平均时间复杂度为O(1)；
+
 4. ArrayList添加元素到中间比较慢，因为要搬移元素，平均时间复杂度为O(n)；
+
 5. ArrayList从尾部删除元素极快，时间复杂度为O(1)；
+
 6. ArrayList从中间删除元素比较慢，因为要搬移元素，平均时间复杂度为O(n)；
+
 7. ArrayList支持求并集，调用addAll(Collection c)方法即可；
+
 8. ArrayList支持求交集，调用retainAll(Collection c)方法即可；
+
 9. ArrayList支持求单向差集，调用removeAll(Collection c)方法即可；
+
+10. ArrayList基于数组实现，可以通过下标索引直接查找到指定位置的元素，因此查找效率高，但每次插入或删除元素，就要大量地移动元素，插入删除元素的效率低。
+
+11. 转换为数组：ArrayList转化为静态数组有两个toArray方法
+
+    - `Object[] toArray()`方法。该方法有可能会抛出java.lang.ClassCastException异常，如果直接用向下转型的方法，将整个ArrayList集合转变为指定类型的Array数组，便会抛出该异常，而如果转化为Array数组时不向下转型，而是将每个元素向下转型，则不会抛出该异常，显然对数组中的元素一个个进行向下转型，效率不高，且不太方便。
+
+    - `<T> T[] toArray(T[] a)`方法。该方法可以直接将ArrayList转换得到的Array进行整体向下转型（转型其实是在该方法的源码中实现的），且从该方法的源码中可以看出，参数a的大小不足时，内部会调用Arrays.copyOf方法，该方法内部创建一个新的数组返回，因此对该方法的常用形式如下：
+
+      ```java
+      public static Integer[] vectorToArray2(ArrayList<Integer> v) {
+          return v.toArray(new Integer[v.size()]);
+      }
+      ```
+
+12. 允许null值。
