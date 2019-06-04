@@ -39,6 +39,7 @@ Unicode编码的一种实现。Unicode是统一编码标准规范。
 ### 编码规则：
 规则1：对于单字节字符，字节的第一位为0，后7位为这个符号的Unicode码，所以对于拉丁字母，UTF-8与ASCII码是一致的。
 规则2：对于n字节(n&gt;1)的字符，第一个字节前n位都设为1，第n+1位为0，后面字节的前两位一律设为10，剩下没有提及的位，全部为这个符号的Unicode编码。
+
 如图：
 ![](https://xiaozhang-image.oss-cn-shanghai.aliyuncs.com/github/java-summary/java-basic/%E5%AD%97%E7%AC%A6%E7%BC%96%E7%A0%81%E5%B8%B8%E8%AF%86/Unicode%E7%BC%96%E7%A0%81.png)
 

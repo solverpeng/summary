@@ -195,7 +195,11 @@ void addEntry(int hash, K key, V value, int bucketIndex) {
     // 创建Entry并存储到hash表中
     createEntry(hash, key, value, bucketIndex);
 }
+```
 
+### 扩容
+
+```java
 // 扩容
 void resize(int newCapacity) {
     Entry[] oldTable = table;
@@ -403,6 +407,13 @@ static final int tableSizeFor(int cap) {
 
 ### put(K key, V value)
 
+> 1. 对key的hashCode()做hash，然后再计算index;
+> 2. 如果没碰撞直接放到bucket里；
+> 3. 如果碰撞了，以链表的形式存在buckets里；
+> 4. 如果碰撞导致链表过长(大于等于TREEIFY_THRESHOLD，默认为8)，就把链表转换成红黑树；
+> 5. 如果节点已经存在就替换old value(保证key的唯一性)；
+> 6. 如果bucket满了(超过load factor * current capacity)，就进行resize。
+
 ```java
 public V put(K key, V value) {
     return putVal(hash(key), key, value, false, true);
@@ -460,7 +471,15 @@ final V putVal(int hash, K key, V value, boolean onlyIfAbsent, boolean evict) {
     afterNodeInsertion(evict);
     return null;
 }
+```
 
+### 扩容
+
+> 1. 无节点，不处理；
+> 2. 单节点，重新计算index（hash & (newCap - 1)）。
+> 3. 多节点，跟单节同样的情况，只是没有重新计算所有的index，而是看看原来的hash值新增的那个bit是1还是0（因为容量扩大了一倍，因此影响结果的是hash之前没有参与运算的最右侧位值，通过 hash & oldCap 便能得到），是0的话索引没变，是1的话索引变成“原索引+oldCap”。
+
+```java
 //扩容函数。在插入键值对时，且发现容量不足，则执行扩容操作。两种情况：一是初始化哈希表；二是发现当前数组容量不足。
 final Node<K,V>[] resize() {
     Node<K,V>[] oldTab = table;
@@ -536,5 +555,150 @@ final Node<K,V>[] resize() {
 }
 ```
 
+### get(Object key)
+
+> 1. 对key的hashCode()做hash，然后再计算index;
+> 2. 如果该 index 下没有值，则直接返回 null；
+> 3. index 下有值，判断 table 数组中该下标处第一个节点是否命中，命中则直接返回；
+> 4. 未命中，则判断去树结构中查找，或者去链表结构中查找，找到则返回。
+
+```java
+public V get(Object key) {
+    Node<K,V> e;
+    //为null
+    return (e = getNode(hash(key), key)) == null ? null : e.value;
+}
+
+final Node<K,V> getNode(int hash, Object key) {
+    Node<K,V>[] tab; Node<K,V> first, e; int n; K k;
+    // 如果哈希表容量为0或者关键字没有命中，直接返回null
+    if ((tab = table) != null && (n = tab.length) > 0 &&
+        (first = tab[(n - 1) & hash]) != null) {
+        // 通过hash和key判断是否为第一个节点
+        if (first.hash == hash && // always check first node
+            ((k = first.key) == key || (key != null && key.equals(k))))
+            return first;
+        if ((e = first.next) != null) {
+            // 以红黑树的方式查找
+            if (first instanceof TreeNode)
+                return ((TreeNode<K,V>)first).getTreeNode(hash, key);
+            do {// 遍历链表查找
+                if (e.hash == hash && ((k = e.key) == key || (key != null && key.equals(k))))
+                    return e;
+            } while ((e = e.next) != null);
+        }
+    }
+    return null;
+}
+```
+
+## 对比
+
+### hash()方法
+
+在 JDK1.7中，使用了4次位运算+5次异或。
+
+```java
+h ^= k.hashCode();
+h ^= (h >>> 20) ^ (h >>> 12);
+h ^ (h >>> 7) ^ (h >>> 4);
+```
+
+在JDK1.8中，1次位运算+1次异或。
+
+```java
+(h = key.hashCode()) ^ (h >>> 16);
+```
+
+### 索引计算
+
+JDK1.7，```h & (length-1);```
+
+JDK1.8，```(n - 1) & hash;```
+
+### 扩容
+
+JDK1.7中，元素个数大于等于阈值且产生哈希碰撞的时候，进行扩容
+
+```java
+if ((size >= threshold) && (null != table[bucketIndex])) {
+    // 容量扩展为之前的2倍
+    resize(2 * table.length);
+    // 若key为null，则hash值为0
+    hash = (null != key) ? hash(key) : 0;
+    // 计算索引位置
+    bucketIndex = indexFor(hash, table.length);
+}
+```
+
+JDK1.8中，
+
+```java
+if ((newCap = oldCap << 1) < MAXIMUM_CAPACITY && oldCap >= DEFAULT_INITIAL_CAPACITY)
+    newThr = oldThr << 1; // double threshold
+}
+```
 
 
+
+## 不同点
+
+1. JDK1.7用的是头插法，而JDK1.8及之后使用的都是尾插法，那么他们为什么要这样做呢？因为JDK1.7是用单链表进行的纵向延伸，当采用头插法时会容易出现逆序且环形链表死循环问题。但是在JDK1.8之后是因为加入了红黑树使用尾插法，能够避免出现逆序且链表死循环的问题。
+2. 扩容后数据存储位置的计算方式也不一样：1. 在JDK1.7的时候是直接用hash值和需要扩容的二进制数进行&（这里就是为什么扩容的时候为啥一定必须是2的多少次幂的原因所在，因为如果只有2的n次幂的情况时最后一位二进制数才一定是1，这样能最大程度减少hash碰撞）（hash值 & length-1）
+3. 而在JDK1.8的时候直接用了JDK1.7的时候计算的规律，也就是扩容前的原始位置+扩容的大小值=JDK1.8的计算方式，而不再是JDK1.7的那种异或的方法。但是这种方式就相当于只需要判断Hash值的新增参与运算的位是0还是1就直接迅速计算出了扩容后的储存方式。
+4. JDK1.7的时候使用的是数组+ 单链表的数据结构。但是在JDK1.8及之后时，使用的是数组+链表+红黑树的数据结构（当链表的深度达到8的时候，也就是默认阈值，就会自动扩容把链表转成红黑树的数据结构来把时间复杂度从O（n）变成O（logN）提高了效率）
+
+
+
+## 问题
+
+1. 哈希表如何解决Hash冲突？
+   - 预防措施
+     - 好的Hash算法
+       - hashCode()
+       - 扰动处理
+       - 数组长度要求为2的次幂
+     - 扩容机制
+       - 哈希表大于等于扩容阈值时，就会扩容哈希表
+       - 扩容阈值=扩容因子 * 容量
+   - 解决方案
+     - 数据结构
+       - jdk1.7=数组+链表
+       - jdk1.8=数组+链表+红黑树
+     - 数据存储机制
+       - jdk1.7=发生冲突时，采用链地址法+头插法
+       - jdk1.8=发生冲突时，采用 链地址法+尾插法+红黑树
+
+2. 为什么键值允许为null？
+   - 键=唯一&可以为null
+     - key为null时，hash值默认为0，只能又一个key为null
+     - value不需要唯一，可以为多个null
+3. 为什么是线程不安全的？
+   - jdk1.7
+     - 无同步锁
+     - 多线程下容易出现resize()死循环
+       - 并发执行put操作导致触发扩容行为，从而导致环形链表
+       - 在获取数据遍历链表时形成死循环
+   - jdk1.8
+     - 无同步锁
+   - fail-fast策略
+     - 在使用迭代器的过程中出现并发操作（并发修改），抛出 ConcurrentModificationException异常
+     - 原理
+       - 变量modCount表示修改次数，没修过1次HashMap内容，都将增加改变量值
+       - 在迭代器初始化时，将该值付给迭代器expectedModCount变量
+       - 判断modCount是否与expectedModCount相等
+         - 相等，则表示无其他线程修改
+         - 不等，则表示又其他线程修改
+4. 为什么不保证有序性？
+   1. 插入顺序与存储顺序不同
+      - 插入顺序=用户操作的顺序
+      - 存储顺序=根据hash算法计算而来的数组下标顺序
+5. 为什么位置会随时间变化？
+   - 存在扩容操作从而导致存储位置重新计算，从而发生变化
+6. 为什么HashMap中String、Integer这样的包装类适合作为key键
+   - String、Integer等包装类的特性，保证了 Hash 值得不可更改性 & 计算准确性，减少了发生hash碰撞得几率
+   - String、Integer包装类的特性
+     - final类型
+       - 具有不可变性
+       - 保证了key的不可更改性，不会出现放入&获取时哈希码不同的情况
+       - 内部重写了equals()和hashCode()方法
