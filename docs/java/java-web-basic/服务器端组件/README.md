@@ -7,7 +7,7 @@
 `filter`是一个可以复用的代码片段，可以用来转换`HTTP`请求、响应和头信息。`Filter`不像`Servlet`，它不能产生一个请求或者响应，它只是修改对某一资源的请求，或者修改从某一的响应。
 
 ## listener
-监听器，从字面上可以看出`listener`主要用来监听只用。通过`listener`可以监听`web`服务器中某一个执行动作，并根据其要求作出相应的响应。
+监听器，从字面上可以看出`listener`主要用来监听作用。通过`listener`可以监听`web`服务器中某一个执行动作，并根据其要求作出相应的响应。
 
 通俗的语言说就是在`application，session，request`三个对象创建消亡或者往其中添加修改删除属性时自动执行代码的功能组件。
 
@@ -47,25 +47,25 @@
 ## listener
 servlet2.4规范中提供了8个 `listener` 接口，可以将其分为三类，分别如下：
 
-（1）与 `servletContext` 有关的 `listner`接口。
-包括：ServletContextListener、ServletContextAttributeListener
+1. 与 `servletContext` 有关的 `listner`接口。
+   包括：ServletContextListener、ServletContextAttributeListener
 
-（2）与 `HttpSession` 有关的 `Listner` 接口。
-包括：HttpSessionListner、HttpSessionAttributeListener、HttpSessionBindingListener、 HttpSessionActivationListener
+2. 与 `HttpSession` 有关的 `Listner` 接口。
+   包括：HttpSessionListner、HttpSessionAttributeListener、HttpSessionBindingListener、 HttpSessionActivationListener
 
-（3）与 `ServletRequest` 有关的 `Listener` 接口.
-包括：ServletRequestListner、ServletRequestAttributeListener
+3. 与 `ServletRequest` 有关的 `Listener` 接口.
+   包括：ServletRequestListner、ServletRequestAttributeListener
 
 # 生命周期
 ## servlet
-（1）init() 方法
-在第一次创建`Servlet`的时候会被调用。通常情况下，用户第一次调用对应该 `Servlet` 的`URL`时，`Servlet` 会被创建。但是当服务器启动时，你也可以指定 `Servlet` 被加载。当用户调用 `servlet` 的时候，每个 `servlet` 的实例就会被创建，并且每一个用户的请求都会产生一个新的线程，在适当的时刻交给 `doGet()` 或是 `doPost()` 方法。
+1. init() 方法
+   在第一次创建`Servlet`的时候会被调用。通常情况下，用户第一次调用对应该 `Servlet` 的`URL`时，`Servlet` 会被创建。但是当服务器启动时，你也可以指定 `Servlet` 被加载。当用户调用 `servlet` 的时候，每个 `servlet` 的实例就会被创建，并且每一个用户的请求都会产生一个新的线程，在适当的时刻交给 `doGet()` 或是 `doPost()` 方法。
 
-（2）service() 方法
-是执行实际任务的主要方法。`Servlet` 容器（Web 服务器）调用 `service()` 方法来处理来自客户端的请求，并将格式化的响应返回到客户端。每次服务器接收到一个 `servlet` 请求时，服务器会产生一个新的线程并调用服务。service() 方法由容器调用，且 `service` 方法在适当的时候调用 `doGet、doPost、doPut、doDelete` 等。所以对 `service()` 方法你什么都不需要做，只是根据你接收到的来自客户端的请求类型来重写 `doGet()` 或 `doPost()`。`doGet()` 和 `doPost()` 方法在每次服务请求中是最常用的方法。下面是这两种方法的特征。
+2. service() 方法
+   是执行实际任务的主要方法。`Servlet` 容器（Web 服务器）调用 `service()` 方法来处理来自客户端的请求，并将格式化的响应返回到客户端。每次服务器接收到一个 `servlet` 请求时，服务器会产生一个新的线程并调用服务。service() 方法由容器调用，且 `service` 方法在适当的时候调用 `doGet、doPost、doPut、doDelete` 等。所以对 `service()` 方法你什么都不需要做，只是根据你接收到的来自客户端的请求类型来重写 `doGet()` 或 `doPost()`。`doGet()` 和 `doPost()` 方法在每次服务请求中是最常用的方法。下面是这两种方法的特征。
 
-（3）destroy() 方法
-`destroy()` 方法只在 `servlet` 生命周期结束时被调用一次。
+3. destroy() 方法
+   `destroy()` 方法只在 `servlet` 生命周期结束时被调用一次。
 
 ## filter
 ## 生命周期：

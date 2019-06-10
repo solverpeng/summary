@@ -1,20 +1,20 @@
 # Java8日期时间
 
-旧得日期类java.util.Date新增了很多过期方法，新的日期类java.time.LocalDate/LocalTime/LocalDateTime，新的日期类提供了静态初始化方法、日期时间加减方法、年月日周星期时分秒的操作以及覆盖、格式化、比较、相差等方法。也有表示时间戳的 Instant，以及表示时间段的 Duration和Period。
+旧的日期类java.util.Date新增了很多过期方法，新的日期类java.time.LocalDate/LocalTime/LocalDateTime，新的日期类提供了静态初始化方法、日期时间加减方法、年月日周星期时分秒的操作以及覆盖、格式化、比较、相差等方法。也有表示时间戳的 Instant，以及表示时间段的 Duration和Period。
 
 ## Date
 
 Java8中的 java.util.Date类除去过期的方法，有如下可用的API：
 
 ```java
-Date();				   //构造器，获取当前时间
-Date(long date);	           //通过时间戳初始化日期
-getTime();			   //获取时间戳
-before(Date date);	           //日期比较
-after(Date date);	           //日期比较
-compareTo(Date date);              //日期比较
-from(Instant instant);             //新的日期类转为旧的日期类
-toInstant();		           //旧的日期类转为新的日期类
+Date();				   			//构造器，获取当前时间
+Date(long date);	            //通过时间戳初始化日期
+getTime();			  			//获取时间戳
+before(Date date);	            //日期比较
+after(Date date);	            //日期比较
+compareTo(Date date);           //日期比较
+from(Instant instant);          //新的日期类转为旧的日期类
+toInstant();		            //旧的日期类转为新的日期类
 ```
 
 [测试Demo项目地址](https://github.com/solverpeng/java-code/blob/master/java-basic/java8-date-time/src/main/java/com/solverpeng/java8/DateAPI.java)
