@@ -2,11 +2,15 @@
 
 `Spring MVC` 和其他 web 框架类似，围绕着一个前控制器设计了一个中央 `Servlet`，即`DispatcherServlet`。
 
-和其他`Servlet`类似，`DispatcherServlet`也需要根据 Servlet 规范声明和映射使用 Java 配置或是配置在 web.xml中。相反的，`DispatcherServlet`使用 Spring 配置发现它需要的各种组件，如：请求映射/视图解析/异常处理等等。
+和其他`Servlet`类似，`DispatcherServlet`也需要根据 Servlet 规范声明和映射使用 Java 配置或是配置在 web.xml中。但不同的是，`DispatcherServlet`使用 Spring 配置发现它需要的各种组件，如：请求映射/视图解析/异常处理等等。
+
+
+
+## 初始化方式
 
 初始化`DispatcherServlet`的两种方式：
 
-通过 `SCI` 进行初始化：javax.servlet.ServletContainerInitializer#onStartup
+1. 通过 `SCI` 进行初始化：javax.servlet.ServletContainerInitializer#onStartup
 
 ```java
 public class MyWebApplicationInitializer implements WebApplicationInitializer {
@@ -26,7 +30,7 @@ public class MyWebApplicationInitializer implements WebApplicationInitializer {
 }
 ```
 
-通过监听器进行初始化：javax.servlet.ServletContextListener#contextInitialized
+2. 通过监听器进行初始化：javax.servlet.ServletContextListener#contextInitialized
 
 ```xml
 <web-app>
@@ -61,11 +65,17 @@ public class MyWebApplicationInitializer implements WebApplicationInitializer {
 
 ## 层次结构
 
-`DispatcherServlet`需要一个 `WebApplicationContext`进行配置。`WebApplicationContext`用来关联`ServletContext`和`Servlet`。可以通过`RequestContextUtils` 的静态方法来查找`WebApplicationContext`。
+`DispatcherServlet`需要一个 `WebApplicationContext`进行配置。`WebApplicationContext`用来关联`ServletContext`和`Servlet`。可以通过`RequestContextUtils` 的静态方法来获取`WebApplicationContext`。
+
+```java
+WebApplicationContext webApplicationContext = RequestContextUtils.findWebApplicationContext(request);   
+```
 
 
 
-对于很多应用来说，有一个单独的`WebApplictionContext`是比较简单和方便的。或者也可以有这样的上下文层次结构，其中一个 `根(root)WebApplicationContext`，在多个 `DispatcherServlet`实例间共享，每个实例都有自己的`子（child）WebApplicationContext`。
+对于很多应用来说，使用一个单独的`WebApplictionContext`是比较简单和方便的。
+
+对于其他一些应用来说，也可以有这样的上下文层次结构，定义为父子容器。其中一个 `根(root)WebApplicationContext`，在多个 `DispatcherServlet`实例间共享，每个实例都有自己的`子（child）WebApplicationContext`。
 
 
 
@@ -134,7 +144,7 @@ public class MyWebAppInitializer extends AbstractAnnotationConfigDispatcherServl
 
 
 
-## 特殊的`Bean`类型
+## 特殊的Bean类型
 
 `DispatcherServlet`委托特殊类型的Bean来处理请求和渲染响应。这些特殊类型的 Bean 意味着是被Spring管理的`Object`实例。这些类型通常有内置的实现，但是我们可以自定义其属性并扩展或替换他们。
 
