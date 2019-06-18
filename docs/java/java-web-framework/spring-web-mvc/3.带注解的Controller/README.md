@@ -442,57 +442,516 @@ public class EditPetForm {
 
 ### @RequestHeader
 
+可以使用 `@RequestHeader` 注解绑定一个请求头到控制器中方法参数。
+
+考虑如下请求头：
+
+```
+Host                    localhost:8080
+Accept                  text/html,application/xhtml+xml,application/xml;q=0.9
+Accept-Language         fr,en-gb;q=0.7,en;q=0.3
+Accept-Encoding         gzip,deflate
+Accept-Charset          ISO-8859-1,utf-8;q=0.7,*;q=0.7
+Keep-Alive              300
+```
+
+下面的例子演示如何获取 `Accept-Encoding` 和 `Keep-Alive` 头：
+
+```java
+@GetMapping("/headers")
+public String handle(@RequestHeader("Accept-Encoding") String encoding,
+                     @RequestHeader("Keep-Alive") long keepAlive,
+                     @RequestHeader("Host") String host,
+                     @RequestHeader("Accept") String accept) {
+    return "requestHeader->encoding:" + encoding + ", keepAlive:" + keepAlive + ", Host:" + host + ",Accept:" + accept;
+}
+```
+
+如果目标方法参数不是一个 `String` 类型，也会进行自动的类型转换。
+
+当在`Map<String,String>`，`MultiValueMap<String,String>`或`HttpHeaders`参数上使用`@RequestHeader`注解时，会将所有请求头值填充参数。
+
+> 内置支持可用于将逗号分隔的字符串转换为字符串或类型转换系统已知的其他类型的数组或集合。
+>
+> 例如，使用`@RequestHeader("Accept")`注解的方法参数可以是String类型，也可以是`String[]`或`List<String>`。?
+
 
 
 ### @CookieValue
+
+可以使用`@CookieValue`注解将HTTP cookie的值绑定到控制器中的方法参数。
+
+考虑如下Cookie：
+
+```
+JSESSIONID=415A4AC178C59DACE0B2C9CA727CDD84
+```
+
+下面例子展示如何获取cookie的值：
+
+```java
+@GetMapping("/jsessionid")
+public String handler(@CookieValue("JSESSIONID") String cookie) {
+    return "cookieValue->jsessionid:" + cookie;
+}
+```
+
+如果目标方法参数不是一个 `String` 类型，也会进行自动的类型转换。
 
 
 
 ### @ModelAttribute
 
+在控制器的处理器方法参数上添加 `@ModelAttribute` 注解可以访问模型中的属性，如果不存在这个模型，则会自动将其实例化，产生一个新的模型。模型属性还覆盖了来自 HTTP Servlet 请求参数的名称与字段名称匹配的值，也就是请求参数如果和模型类中的域变量一致，则会自动将这些请求参数绑定到这个模型对象，这被称为数据绑定，从而避免了解析和转换每个请求参数和表单字段这样的代码。 
+
+
+
+处理器方法中@ModelAttribute标注的参数会被从以下几个来源进行匹配绑定：
+
+- 已经定义过的模型方法（带有 `@ModelAttribute` 的方法）
+- HTTP Session 中和字段名匹配的会话方法（带有 `@SessionAttribute` 的方法，和模型方法类似，只是作用域不同）
+- 经过 URL 转换器解析过的路径变量
+- 该模型类的默认构造方法
+- 调用具有与 Servlet 请求参数匹配的参数的 “主构造函数”; 参数名称通过 Java Beans `@ConstructorProperties` 或通过字节码中的运行时保留参数名称确定。
+
+
+
+虽然一般都是使用模型方法 Model method 来使用属性填充模型，但另一种方法是依靠 `Converter<String,T>` 识别 URI 路径变量来绑定。
+
+
+
+在下面的例子中，模型属性名称 “user” 与 URI 路径变量 “user” 匹配，并且通过将 String 类型的用户名交给给已注册的 `Converter<String,User>` 这个转换器来生成创建模型：
+
+```java
+@PutMapping("/users/{user}")
+public String saveUser(@ModelAttribute("user") User user) {
+    // ...
+}
+```
+
+在获得模型属性实例之后，请求数据就会被绑定到模型属性上。 `WebDataBinder` 负责将 Servlet 请求参数名称（查询参数或表单字段）和目标模型对象上的字段名称进行匹配。 必要时会将属性的类型进行转换后再填充对应字段。
+
+
+
+数据绑定不能保证不会出错，发生错误时默认情况下会抛出 `BindException` 异常，但要在处理器方法中识别出这些错误，需要在 @ModelAttribute 后面添加一个 `BindingResult` 类型的参数，需要注意的是：这个参数必须和模型属性参数 (`@ModelAttribute` 参数)相邻，如下所示：
+
+```java
+@PostMapping("/owners/{componyId}/departments/{departmentId}/edit")
+public String processSubmit(@ModelAttribute("compony") Compony compony, BindingResult result) {
+    if (result.hasErrors()) {
+        return "componyForm";
+    }
+}
+```
+
+这个例子表示如果用户提交的表单不符合预期的匹配规则，就会返回视图 `componyForm`。
+
+
+
+有时候我们需要获得一个不带数据绑定的模型属性，也就是需要在处理器方法中使用 `new` 关键字来实例化一个对象。但是在 Spring MVC 中就不用这么麻烦了，我们可以将模型注入控制器并直接访问它，或者可以添加 `@ModelAttribute（binding = false）` 来表示不需要绑定数据，如下所示：
+
+```java
+@ModelAttribute
+public UserForm setUpForm() {
+    return new UserForm();
+}
+
+@ModelAttribute
+public User findUser(@PathVariable String userId) {
+    return userRepository.findOne(userId);
+}
+
+@PostMapping("update")
+public String update(@Valid UserUpdateForm form, BindingResult result,
+        @ModelAttribute(binding=false) User user) {
+    // ...
+}
+```
+
+在参数上添加 `javax.validation.Valid` 注解或 Spring 的 `@Validated` 注解，就可以在数据绑定后使用字段校验功能了，就像这样：
+
+```java
+@PostMapping("/componies/{componyId}/departments/{departmentId}/edit")
+public String processSubmit(@Valid @ModelAttribute("department") Department department, BindingResult result) {
+    if (result.hasErrors()) {
+        return "departmentForm";
+    }
+    // ...
+}
+```
+
+这样写和在方法体中写 `model.addAttribute("compony",compony)` 是等价的。
+
+需要注意的是 `@ModelAttribute` 注解如果不加，按照 `BeanUtils` 中的 `isSimpleProperty`方法来判断，如果不属于简单类型的参数，都会被自动视为 `ModelAttribute`。
+
+
+
+> 数据绑定指的是Servlet请求绑定到模型数据，而不包含模型方法。@ModelAttribute的binding属性只对数据绑定生效。
+
 
 
 ### @SessionAttributes
+
+用于在多个请求之间的HTTP Servlet会话中存储模型数据。是一个类级别的注解，用于声明特定控制器使用的会话属性。这通常列出模型属性的名称或模型属性的类型，这些属性应该透明地存储在会话中以供后续访问请求使用。
+
+```java
+@RestController
+@RequestMapping("/sessionAttributes")
+@SessionAttributes("name")
+public class HandlerMethodSessionAttributesController {
+    // ...
+}
+```
+
+在第一个请求中，当名称为pet的模型属性添加到模型中时，它会自动保存在HTTP Servlet会话中。它保持不变，直到另一个控制器方法添加相同的模型属性到模型中的时候会替换它，或者使用SessionStatus方法参数来清除存储。只对当前控制类起作用。
+
+```java
+@RestController
+@RequestMapping("/sessionAttributes")
+@SessionAttributes("name")
+public class HandlerMethodSessionAttributesController {
+
+    @RequestMapping("/add")
+    public String addToSessionAttribute(Model model) {
+        model.addAttribute("name", "tom");
+        return "sessionAttributes->add->name:tom";
+    }
+    
+    @RequestMapping("/clear")
+    public String removeSessionAttributes(HttpSession session, SessionStatus status) {
+        String name = session.getAttribute("name").toString();
+        status.setComplete();
+        return "sessionAttributes->clear,name=" + name;
+    }
+}
+```
 
 
 
 ### @SessionAttribute
 
+如果需要访问全局管理的预先存在的会话属性（例如，在控制器外部 - 例如，通过过滤器），可能存在也可能不存在，可以在方法参数上使用@SessionAttribute注解。
+
+```java
+@RequestMapping("/")
+public String handle(@SessionAttribute User user) { 
+    // ...
+}
+```
+
+对于需要添加或删除会话属性，考虑将`org.springframework.web.context.request.WebRequest`或`javax.servlet.http.HttpSession`注入控制器方法。
+
+要在会话中临时存储模型属性作为控制器工作流的一部分，请考虑使用@SessionAttributes。
+
 
 
 ### @RequestAttribute
+
+与`@SessionAttribute`类似，可以使用`@RequestAttribute`注解来访问先前创建的预先存在的请求属性（例如，通过Servlet Filter或 HandlerInterceptor）：
+
+```java
+@GetMapping("/")
+public String handle(@RequestAttribute Client client) { 
+    // ...
+}
+```
 
 
 
 ### Redirect Attributes
 
+默认情况下，所有模型属性都被视为在重定向URL中作为URI模板变量公开。在其余属性中，原始类型或集合或基本类型数组的属性会自动附加为查询参数。
+
+
+
+如果专门为重定向准备了模型实例，则将原始类型属性作为查询参数附加可以是期望的结果。但是，在带注解的控制器中，模型可以包含为渲染目的而添加的其他属性（例如，下拉字段值）。为了避免在URL中出现此类属性的可能性，`@RequestMapping`方法可以声明RedirectAttributes类型的参数，并使用它来指定可供RedirectView使用的确切属性。如果方法重定向，则使用RedirectAttributes的内容。否则，使用模型的内容。
+
+
+
+RequestMappingHandlerAdapter提供了一个名为ignoreDefaultModelOnRedirect的标志，您可以使用该标志指示如果控制器方法重定向，则永远不应使用默认模型的内容。相反，控制器方法应声明RedirectAttributes类型的属性，如果不这样做，则不应将任何属性传递给RedirectView。MVC命名空间和MVC Java配置都将此标志设置为false，以保持向后兼容性。但是，对于新应用程序，我们建议将其设置为true。
+
+
+
+请注意，在展开重定向URL时，将自动使当前请求中的URI模板变量可用，并且您不需要通过Model或RedirectAttributes显式添加它们。
+
+以下示例显示如何定义重定向：
+
+```java
+@PostMapping("/files/{path}")
+public String upload(...) {
+    // ...
+    return "redirect:files/{path}";
+}
+```
+
+将数据传递到重定向目标的另一种方法是使用flash属性。与其他重定向属性不同，Flash属性保存在HTTP会话中（因此，不会出现在URL中）。
+
 
 
 ### Flash Attributes
+
+Flash属性为一个请求提供了一种存储打算在另一个请求中使用的属性的方法。重定向时最常需要这种方法 - 例如，Post-Redirect-Get模式。Flash重定向（通常在会话中）之前临时保存Flash属性，以便在重定向后对请求可用并立即删除。
+
+Spring MVC有两个主要的抽象支持flash属性。FlashMap用于保存Flash属性，而FlashMapManager用于存储，检索和管理FlashMap实例。
+
+
+
+Flash属性支持始终处于“打开”状态，无需显式启用。但是，如果不使用，它永远不会导致HTTP会话创建。在每个请求中，都有一个“输入”FlashMap，其中包含从先前请求（如果有）传递的属性，以及一个“输出”FlashMap，其中包含要为后续请求保存的属性。两个FlashMap实例都可以通过RequestContextUtils中的静态方法从Spring MVC中的任何位置访问。
+
+
+
+带注解的控制器通常不需要直接使用FlashMap。相反，@RequestMapping方法可以接受RedirectAttributes类型的参数，并使用它为重定向场景添加flash属性。通过RedirectAttributes添加的Flash属性会自动传播到“输出”FlashMap。同样，在重定向之后，“输入”FlashMap的属性会自动添加到为目标URL提供服务的控制器的模型中。
+
+
+
+> **匹配请求到flash属性**
+>
+> Flash属性的概念存在于许多其他Web框架中，并且已经证明有时会暴露于并发问题。这是因为，根据定义，Flash属性将被存储直到下一个请求。但是，非常“下一个”请求可能不是预期的接收者而是另一个异步请求（例如，轮询或资源请求），在这种情况下，过早删除flash属性。
+>
+> 
+>
+> 为了减少此类问题的可能性，RedirectView使用目标重定向URL的路径和查询参数自动“标记”FlashMap实例。反过来，默认的FlashMapManager在查找“输入”FlashMap时将该信息与传入请求进行匹配。
+>
+> 
+>
+> 这并不能完全消除并发问题的可能性，但会使用重定向URL中已有的信息大大减少并发问题。因此，我们建议您主要使用Flash属性进行重定向方案。
 
 
 
 ### Multipart
 
+启用MultipartResolver后，将解析具有multipart/form-data的POST请求的内容，并将其作为常规请求参数进行访问。以下示例访问一个常规表单字段和一个上传文件：
+
+```java
+@Controller
+public class FileUploadController {
+
+    @PostMapping("/form")
+    public String handleFormUpload(@RequestParam("name") String name,
+            @RequestParam("file") MultipartFile file) {
+        if (!file.isEmpty()) {
+            byte[] bytes = file.getBytes();
+            // store the bytes somewhere
+            return "redirect:uploadSuccess";
+        }
+        return "redirect:uploadFailure";
+    }
+}
+```
+
+将参数类型声明为`List<MultipartFile>`允许为同一参数名称解析多个文件。
+
+当@RequestParam注释声明为Map`<String,MultipartFile>`或MultiValueMap`<String,MultipartFile>`时，如果没有在注解中指定参数名称，则会使用每个给定参数名称的多部分文件填充Map。
+
+> 通过Servlet3.0多部分解析，可以使用`javax.servlet.http.Part`替代 Spring的`MultipartFile`，作为方法参数或集合值类型。
+
+
+
+还可以将多部分内容用作绑定到命令对象的数据的一部分。例如，前面示例中的表单字段和文件可以是表单对象上的字段，如以下示例所示：
+
+```java
+class MyForm {
+
+    private String name;
+
+    private MultipartFile file;
+
+    // ...
+}
+
+@Controller
+public class FileUploadController {
+
+    @PostMapping("/form")
+    public String handleFormUpload(MyForm form, BindingResult errors) {
+        if (!form.getFile().isEmpty()) {
+            byte[] bytes = form.getFile().getBytes();
+            // store the bytes somewhere
+            return "redirect:uploadSuccess";
+        }
+        return "redirect:uploadFailure";
+    }
+}
+```
+
+还可以在RESTful服务方案中从非浏览器客户端提交多部分请求。以下示例显示了带有JSON的文件：
+
+```
+POST /someUrl
+Content-Type: multipart/mixed
+
+--edt7Tfrdusa7r3lNQc79vXuhIIMlatb7PQg7Vp
+Content-Disposition: form-data; name="meta-data"
+Content-Type: application/json; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+{
+    "name": "value"
+}
+--edt7Tfrdusa7r3lNQc79vXuhIIMlatb7PQg7Vp
+Content-Disposition: form-data; name="file-data"; filename="file.properties"
+Content-Type: text/xml
+Content-Transfer-Encoding: 8bit
+... File Data ...
+```
+
+您可以使用@RequestParam作为String访问“元数据”部分，但您可能希望它从JSON反序列化（类似于@RequestBody）。在使用HttpMessageConverter转换后，使用@RequestPart注解访问多部分：
+
+```java
+@PostMapping("/")
+public String handle(@RequestPart("meta-data") MetaData metadata,
+        @RequestPart("file-data") MultipartFile file) {
+    // ...
+}
+```
+
+可以将@RequestPart与javax.validation.Valid结合使用或使用Spring的@Validated注释，这两种注释都会导致应用标准Bean验证。默认情况下，验证错误会导致MethodArgumentNotValidException，并将其转换为400（BAD_REQUEST）响应。或者，您可以通过Errors或BindingResult参数在控制器内本地处理验证错误，如以下示例所示：
+
+```java
+@PostMapping("/")
+public String handle(@Valid @RequestPart("meta-data") MetaData metadata,
+        BindingResult result) {
+    // ...
+}
+```
+
 
 
 ### @RequestBody
+
+您可以使用@RequestBody注解通过HttpMessageConverter将请求主体读取并反序列化为Object。以下示例使用@RequestBody参数：
+
+```java
+@PostMapping("/accounts")
+public void handle(@RequestBody Account account) {
+    // ...
+}
+```
+
+您可以使用MVC配置的“Message Converters ”选项来配置或自定义消息转换。
+
+您可以将@RequestBody与javax.validation.Valid或Spring的@Validated注释结合使用，这两种注释都会导致应用标准Bean验证。默认情况下，验证错误会导致MethodArgumentNotValidException，并将其转换为400（BAD_REQUEST）响应。或者，您可以通过Errors或BindingResult参数在控制器内本地处理验证错误，如以下示例所示：
+
+```java
+@PostMapping("/accounts")
+public void handle(@Valid @RequestBody Account account, BindingResult result) {
+    // ...
+}
+```
 
 
 
 ### HttpEntity
 
+HttpEntity与使用@RequestBody或多或少相同，但它基于一个公开请求标题和正文的容器对象。
+
+```java
+@PostMapping("/accounts")
+public void handle(HttpEntity<Account> entity) {
+    // ...
+}
+```
+
 
 
 ### @ResponseBody
+
+您可以在方法上使用@ResponseBody批注，以通过HttpMessageConverter将返回序列化到响应主体。
+
+```java
+@GetMapping("/accounts/{id}")
+@ResponseBody
+public Account handle() {
+    // ...
+}
+```
+
+类级别也支持@ResponseBody，在这种情况下，它由所有控制器方法继承。这是@RestController的效果，它只不过是一个用@Controller和@ResponseBody标记的元注释。
+
+您可以使用MVC配置的“Message Converters ”选项来配置或自定义消息转换。
+
+可以将@ResponseBody方法与JSON序列化视图结合使用。参见：[Jackson JSON](https://docs.spring.io/spring/docs/5.1.8.RELEASE/spring-framework-reference/web.html#mvc-ann-jackson)
 
 
 
 ### ResponseEntity
 
+ResponseEntity与@ResponseBody类似，但具有响应状态码和响应标头。
+
+```java
+@GetMapping("/something")
+public ResponseEntity<String> handle() {
+    String body = ... ;
+    String etag = ... ;
+    return ResponseEntity.ok().eTag(etag).build(body);
+}
+```
+
 
 
 ### Jackson JSON
+
+Spring为Jackson JSON库提供支持。
+
+JSON 视图
+
+Spring MVC为Jackson的序列化视图提供内置支持，允许仅渲染Object中所有字段的子集。要将其与@ResponseBody或ResponseEntity控制器方法一起使用，您可以使用Jackson的@JsonView批注来激活序列化视图类，如以下示例所示：
+
+```java
+@RestController
+public class UserController {
+
+    @GetMapping("/user")
+    @JsonView(User.WithoutPasswordView.class)
+    public User getUser() {
+        return new User("eric", "7!jd#h23");
+    }
+}
+
+public class User {
+
+    public interface WithoutPasswordView {};
+    public interface WithPasswordView extends WithoutPasswordView {};
+
+    private String username;
+    private String password;
+
+    public User() {
+    }
+
+    public User(String username, String password) {
+        this.username = username;
+        this.password = password;
+    }
+
+    @JsonView(WithoutPasswordView.class)
+    public String getUsername() {
+        return this.username;
+    }
+
+    @JsonView(WithPasswordView.class)
+    public String getPassword() {
+        return this.password;
+    }
+}
+```
+
+> @JsonView允许一组视图类，但每个控制器方法只能指定一个。如果需要激活多个视图，可以使用复合接口。
+
+对于依赖于视图分辨率的控制器，可以将序列化视图类添加到模型中，如以下示例所示：
+
+```java
+@Controller
+public class UserController extends AbstractController {
+
+    @GetMapping("/user")
+    public String getUser(Model model) {
+        model.addAttribute("user", new User("eric", "7!jd#h23"));
+        model.addAttribute(JsonView.class.getName(), User.WithoutPasswordView.class);
+        return "userView";
+    }
+}
+```
 
 
 
