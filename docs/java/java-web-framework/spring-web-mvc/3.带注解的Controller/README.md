@@ -990,31 +990,247 @@ public class UserController extends AbstractController {
 
 ## 模型（Model）
 
+`@ModelAttribute`注解
+
+- 使用在@RequestMapping标注的方法中的**方法参数**上，用于创建或访问模型中的对象，并通过WebDataBinder将其绑定到请求。
+- 作为@Controller或@ControllerAdvice类中的方法级注解，会在当前类任何@RequestMapping方法调用之前初始化模型。
+- 使用在@RequestMapping方法上标记其返回值是一个模型属性。
 
 
 
+本次只讨论@ModelAttribute作为方法级注解。一个控制器可以有任意数量的@ModelAttribute标注的方法。在同一个控制器中，所有@RequestMapping方法的调用前都会调用所有的@ModelAttribute方法。@ModelAttribute方法也可以通过@ControllerAdvice在控制器之间共享。
+
+
+
+@ModelAttribute方法具有灵活的方法签名。支持许多与@RequestMapping方法相同的参数，但@ModelAttribute本身或与请求体相关的任何内容除外。
+
+
+
+以下示例显示了@ModelAttribute方法：
+
+```java
+@ModelAttribute
+public void populateModel(@RequestParam String number, Model model) {
+    model.addAttribute(accountRepository.findAccount(number));
+    // add more ...
+}
+```
+
+以下示例仅添加一个属性：
+
+```java
+@ModelAttribute
+public Account addAccount(@RequestParam String number) {
+    return accountRepository.findAccount(number);
+}
+```
+
+> 如果未明确指定名称，则根据对象类型选择默认名称。您始终可以使用重载的addAttribute方法或@ModelAttribute上的name属性（返回值）来指定显式名称。
+
+还可以使用@ModelAttribute作为@RequestMapping方法的方法级注解，这种情况下，@ RequestMapping方法的返回值会被解释为模型属性。
+
+```java
+@GetMapping("/accounts/{id}")
+@ModelAttribute("myAccount")
+public Account handle() {
+    // ...
+    return account;
+}
+```
 
 ## 数据绑定（DataBinder）
+
+@Controller或@ControllerAdvice类可以使用@InitBinder方法初始化`WebDataBinder`的实例，而@InitBinder方法又有如下作用：
+
+- 将请求参数（即表单或查询数据）绑定到模型对象。
+- 将基于字符串的请求值（例如请求参数，路径变量，请求头，cookie等）转换为目标类型的控制器方法参数
+- 在渲染HTML表单时将模型对象值格式化为String值。
+
+@InitBinder方法中可以注册特定于控制器的java.bean.PropertyEditor或Spring Converter和Formatter组件。此外，@InitBinder方法中还可以使用MVC配置在全局共享的FormattingConversionService中注册的Converter和Formatter类型。
+
+@InitBinder方法支持许多与@RequestMapping方法相同的参数，但@ModelAttribute（命令对象）参数除外。
+
+通常，它们使用WebDataBinder参数（用于注册）和void返回值声明。
+
+示例如下：
+
+```java
+@Controller
+public class FormController {
+
+    @InitBinder 
+    public void initBinder(WebDataBinder binder) {
+        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
+        dateFormat.setLenient(false);
+        binder.registerCustomEditor(Date.class, new CustomDateEditor(dateFormat, false));
+    }
+
+    // ...
+}
+```
+
+或者，当您通过共享的FormattingConversionService使用基于Formatter的设置时，您可以重用相同的方法并注册特定于控制器的Formatter实现，示例如下：
+
+```java
+@Controller
+public class FormController {
+
+    @InitBinder 
+    protected void initBinder(WebDataBinder binder) {
+        binder.addCustomFormatter(new DateFormatter("yyyy-MM-dd"));
+    }
+
+    // ...
+}
+```
 
 
 
 ## 异常处理（Exceptions）
 
+@Controller和@ControllerAdvice类可以使用@ExceptionHandler方法来处理来自控制器方法的异常，如下例所示：
+
+```java
+@Controller
+public class SimpleController {
+
+    // ...
+
+    @ExceptionHandler
+    public ResponseEntity<String> handle(IOException ex) {
+        // ...
+    }
+}
+```
+
+异常可能与顶级异常（即抛出直接IOException）或顶级包装器异常中的直接原因相匹配（例如，包含在IllegalStateException内的IOException）。
+
+
+
+对于匹配的异常类型，最好将目标异常声明为方法参数，如前面的示例所示。当多个异常方法匹配时，根异常匹配通常优先于原因异常匹配。更具体地说，ExceptionDepthComparator用于根据抛出的异常类型的深度对异常进行排序。
+
+
+
+或者，通过注解声明缩小要匹配的异常类型，如下所示：
+
+```java
+@ExceptionHandler({FileSystemException.class, RemoteException.class})
+public ResponseEntity<String> handle(IOException ex) {
+    // ...
+}
+```
+
+您甚至可以使用具有非常通用参数签名的特定异常类型列表，如下：
+
+```java
+@ExceptionHandler({FileSystemException.class, RemoteException.class})
+public ResponseEntity<String> handle(Exception ex) {
+    // ...
+}
+```
+
+
+
+> 根和原因异常匹配之间的区别很大。
+>
+> 在前面显示的IOException变体中，通常使用实际的FileSystemException或RemoteException实例作为参数调用该方法，因为它们都从IOException扩展。但是，如果任何此类匹配异常在包装器异常中传播，而该包装异常本身就是IOException，则传入的异常实例就是包装器异常。
+>
+> 
+>
+> 在Exception变体中，行为更简单。这总是在包装场景中使用包装器异常调用，在这种情况下可以通过ex.getCause()找到实际匹配的异常。传入的异常仅在将这些异常作为顶级异常抛出时才是实际的FileSystemException或RemoteException实例。
+
+我们通常建议您在参数签名中尽可能具体，减少root和cause异常类型之间不匹配的可能性。考虑将多匹配方法分解为单独的@ExceptionHandler方法，每个方法通过其签名匹配单个特定异常类型。
+
+
+
+在多@ControllerAdvice安排中，我们建议在@ControllerAdvice上声明您的主根异常映射，并使用相应的顺序进行优先级排序。虽然根异常匹配优先于某个原因，但这是在给定控制器或@ControllerAdvice类的方法中定义的。这意味着优先级较高的@ControllerAdvice bean上的原因匹配优先于较低优先级的@ControllerAdvice bean上的任何匹配（例如，root）。
+
+
+
+最后但并非最不重要的是，@ ExceptionHandler方法实现可以选择通过以原始形式重新抛出它来退出处理给定的异常实例。这在您仅对根级别匹配或在无法静态确定的特定上下文中的匹配中感兴趣的情况下非常有用。重新抛出的异常通过剩余的解析链传播，就好像给定的@ExceptionHandler方法首先不匹配一样。
+
+
+
+Spring MVC中对@ExceptionHandler方法的支持是基于DispatcherServlet级别的HandlerExceptionResolver机制构建的。
+
+
+
 ### 方法参数
 
+@ExceptionHandler方法支持以下参数：
 
+| 方法参数                                                     | 描述                                                         |
+| :----------------------------------------------------------- | :----------------------------------------------------------- |
+| Exception type                                               | 用于访问引发的异常。                                         |
+| `HandlerMethod`                                              | 用于访问引发异常的控制器方法。                               |
+| `WebRequest`, `NativeWebRequest`                             | 无需直接使用Servlet API即可访问请求参数以及请求和会话属性。  |
+| `javax.servlet.ServletRequest`, `javax.servlet.ServletResponse` | 选择任何特定的请求或响应类型（例如，ServletRequest或HttpServletRequest或Spring的MultipartRequest或MultipartHttpServletRequest）。 |
+| `javax.servlet.http.HttpSession`                             | 强制进行会话。因此，这样的论证永远不会是空的。<br />请注意，会话访问不是线程安全的。<br />如果允许多个请求同时访问会话，请考虑将RequestMappingHandlerAdapter实例的synchronizeOnSession标志设置为true。 |
+| `java.security.Principal`                                    | 当前经过身份验证的用户 - 如果已知，可能是特定的Principal实现类。 |
+| `HttpMethod`                                                 | 请求的HTTP方法                                               |
+| `java.util.Locale`                                           | 当前请求区域设置，由最具体的LocaleResolver确定 - 实际上是已配置的LocaleResolver或LocaleContextResolver。 |
+| `java.util.TimeZone`, `java.time.ZoneId`                     | 与当前请求关联的时区，由LocaleContextResolver确定。          |
+| `java.io.OutputStream`, `java.io.Writer`                     | 用于访问原始响应主体，由Servlet API公开。                    |
+| `java.util.Map`, `org.springframework.ui.Model`, `org.springframework.ui.ModelMap` | 用于访问模型以获取错误响应。永远是空的                       |
+| `RedirectAttributes`                                         | 指定在重定向的情况下使用的属性 - （即将附加到查询字符串）和临时存储的flash属性，直到重定向后的请求为止。请参阅重定向属性和Flash属性。 |
+| `@SessionAttribute`                                          | 用于访问任何会话属性，与由于类级别@SessionAttributes声明而存储在会话中的模型属性相反。有关更多详细信息，请参阅@SessionAttribute。 |
+| `@RequestAttribute`                                          | 用于访问请求属性。有关更多详细信息，请参阅@RequestAttribute。 |
 
 ### 返回值
 
+@ExceptionHandler方法支持以下返回值：
 
+| 返回值                                          | 描述                                                         |
+| :---------------------------------------------- | :----------------------------------------------------------- |
+| `@ResponseBody`                                 | 返回值通过HttpMessageConverter实例转换并写入响应。请参阅@ResponseBody。 |
+| `HttpEntity<B>`, `ResponseEntity<B>`            | 返回值指定通过HttpMessageConverter实例转换完整响应（包括HTTP标头和正文）并写入响应。请参阅ResponseEntity。 |
+| `String`                                        | 要使用ViewResolver实现解析的视图名称，并与隐式模型一起使用 - 通过命令对象和@ModelAttribute方法确定。处理程序方法还可以通过声明Model参数（如前所述）以编程方式丰富模型。 |
+| `View`                                          | 用于与隐式模型一起呈现的View实例 - 通过命令对象和@ModelAttribute方法确定。处理程序方法还可以通过声明Model参数（先前描述）以编程方式丰富模型 |
+| `java.util.Map`, `org.springframework.ui.Model` | 要通过RequestToViewNameTranslator隐式确定的视图名称要添加到隐式模型的属性。 |
+| `@ModelAttribute`                               | 要添加到模型的属性，其中视图名称通过RequestToViewNameTranslator隐式确定。请注意，@ ModelAttribute是可选的。请参见本表末尾的“任何其他返回值”。 |
+| `ModelAndView` object                           | 要使用的视图和模型属性，以及（可选）响应状态。               |
+| `void`                                          | 具有void返回类型（或null返回值）的方法被认为已完全处理响应，如果它还具有ServletResponse，OutputStream参数或@ResponseStatus注释。如果控制器已进行正ETag或lastModified时间戳检查，则也是如此（有关详细信息，请参阅控制器）。如果以上都不是真的，则void返回类型也可以指示REST控制器的“无响应主体”或HTML控制器的默认视图名称选择。 |
+| Any other return value                          | 如果返回值与上述任何一个不匹配且不是简单类型（由BeanUtils＃isSimpleProperty确定），则默认情况下，它被视为要添加到模型的模型属性。如果它是一个简单的类型，它仍然没有得到解决。 |
 
 ### REST API exceptions
 
+REST服务的一个常见要求是在响应正文中包含错误详细信息。Spring Framework不会自动执行此操作，因为响应正文中的错误详细信息的表示是特定于应用程序的。但是，@ RestController可以使用带有ResponseEntity返回值的@ExceptionHandler方法来设置响应的状态和正文。这些方法也可以在@ControllerAdvice类中声明，以便全局应用它们。
 
+
+
+在响应主体中实现具有错误详细信息的全局异常处理的应用程序应考虑扩展ResponseEntityExceptionHandler，它提供了对Spring MVC引发的异常的处理，并提供了定制响应体的钩子。要使用它，请创建ResponseEntityExceptionHandler的子类，使用@ControllerAdvice标注它，覆盖必要的方法，并将其声明为Spring bean。
 
 
 
 ## Controller Advice
 
+通常，@ ExceptionHandler，@ InitBinder和@ModelAttribute方法适用于声明它们的@Controller类（或类层次结构）。如果您希望此类方法更全局地应用（跨控制器），则可以在标有@ControllerAdvice或@RestControllerAdvice的类中声明它们。
 
+
+
+@ControllerAdvice用@Component标记，这意味着可以通过组件扫描将这些类注册为Spring bean。@RestControllerAdvice也是一个用@ControllerAdvice和@ResponseBody标记的元注释，这实际上意味着@ExceptionHandler方法通过消息转换（与视图分辨率或模板渲染相对）呈现给响应主体。
+
+
+
+在启动时，@ RequestMapping和@ExceptionHandler方法的基础结构类检测@ControllerAdvice类型的Spring bean，然后在运行时应用它们的方法。全局@ExceptionHandler方法（来自@ControllerAdvice）应用于本地方法（来自@Controller）。相比之下，全局@ModelAttribute和@InitBinder方法在本地方法之前应用。
+
+
+
+默认情况下，@ ControllerAdvice方法适用于每个请求（即所有控制器），但您可以通过使用注释上的属性将其缩小到控制器的子集，如下例所示：
+
+```java
+// Target all Controllers annotated with @RestController
+@ControllerAdvice(annotations = RestController.class)
+public class ExampleAdvice1 {}
+
+// Target all Controllers within specific packages
+@ControllerAdvice("org.example.controllers")
+public class ExampleAdvice2 {}
+
+// Target all Controllers assignable to specific classes
+@ControllerAdvice(assignableTypes = {ControllerInterface.class, AbstractController.class})
+public class ExampleAdvice3 {}
+```
+
+前面示例中的选择器在运行时进行评估，如果广泛使用，可能会对性能产生负面影响。有关更多详细信息，请参阅@ControllerAdvice javadoc。
 
