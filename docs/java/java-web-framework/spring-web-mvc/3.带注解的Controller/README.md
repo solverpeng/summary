@@ -592,7 +592,7 @@ public String processSubmit(@Valid @ModelAttribute("department") Department depa
 
 ### @SessionAttributes
 
-用于在多个请求之间的HTTP Servlet会话中存储模型数据。是一个类级别的注解，用于声明特定控制器使用的会话属性。这通常列出模型属性的名称或模型属性的类型，这些属性应该透明地存储在会话中以供后续访问请求使用。
+用于在多个请求之间的HTTP Servlet会话中临时存储模型数据。是一个类级别的注解，用于声明特定控制器使用的会话属性。这通常列出模型属性的名称或模型属性的类型，这些属性应该透明地存储在会话中以供后续访问请求使用。
 
 ```java
 @RestController
@@ -603,7 +603,7 @@ public class HandlerMethodSessionAttributesController {
 }
 ```
 
-在第一个请求中，当名称为pet的模型属性添加到模型中时，它会自动保存在HTTP Servlet会话中。它保持不变，直到另一个控制器方法添加相同的模型属性到模型中的时候会替换它，或者使用SessionStatus方法参数来清除存储。只对当前控制类起作用。
+在第一个请求中，当名称为name的模型属性添加到模型中时，它会自动保存在HTTP Servlet Session中。它保持不变，直到另一个控制器方法添加相同的模型属性到模型中的时候会替换它，或者使用SessionStatus方法参数来清除存储。只对当前控制类起作用。
 
 ```java
 @RestController
@@ -630,16 +630,16 @@ public class HandlerMethodSessionAttributesController {
 
 ### @SessionAttribute
 
-如果需要访问全局管理的预先存在的会话属性（例如，在控制器外部 - 例如，通过过滤器），可能存在也可能不存在，可以在方法参数上使用@SessionAttribute注解。
+如果访问全局的Session域中的属性，可能存在也可能不存在，可以在方法参数上使用@SessionAttribute注解。
 
 ```java
-@RequestMapping("/")
-public String handle(@SessionAttribute User user) { 
-    // ...
+@RequestMapping("/get")
+public String get(@SessionAttribute("name") String name, @SessionAttribute("age") int age) {
+    return "sessionAttribute:get->name=" + name + ",age=" + age;
 }
 ```
 
-对于需要添加或删除会话属性，考虑将`org.springframework.web.context.request.WebRequest`或`javax.servlet.http.HttpSession`注入控制器方法。
+对于需要添加或删除Session域中的属性，考虑将`org.springframework.web.context.request.WebRequest`或`javax.servlet.http.HttpSession`注入控制器方法参数。
 
 要在会话中临时存储模型属性作为控制器工作流的一部分，请考虑使用@SessionAttributes。
 
@@ -647,12 +647,17 @@ public String handle(@SessionAttribute User user) {
 
 ### @RequestAttribute
 
-与`@SessionAttribute`类似，可以使用`@RequestAttribute`注解来访问先前创建的预先存在的请求属性（例如，通过Servlet Filter或 HandlerInterceptor）：
+与`@SessionAttribute`类似，可以使用`@RequestAttribute`注解来访问先前创建的预先存在的请求域中的属性（例如，通过Servlet Filter或 HandlerInterceptor向请求域中注入属性）：
 
 ```java
-@GetMapping("/")
-public String handle(@RequestAttribute Client client) { 
-    // ...
+@ModelAttribute
+public void putRequestAttribute(HttpServletRequest request) {
+    request.setAttribute("word", "helloWorld!");
+}
+
+@GetMapping("/get")
+public String getRequestAttribute(@RequestAttribute("word") String word) {
+    return "requestAttribute->get:" + word;
 }
 ```
 
@@ -660,15 +665,40 @@ public String handle(@RequestAttribute Client client) {
 
 ### Redirect Attributes
 
-默认情况下，所有模型属性都被视为在重定向URL中作为URI模板变量公开。在其余属性中，原始类型或集合或基本类型数组的属性会自动附加为查询参数。
+默认情况下，所有模型属性都被视为在重定向URL中作为URI template 变量公开。剩下的属性中，原始类型或集合或基本类型数组的属性会自动附加为查询参数。示例如下：
+
+```java
+@RequestMapping("/index")
+public String index(Model model) {
+    model.addAttribute("uriTemplateKey", "uriTemplateValue");
+    model.addAttribute("normalKey", "normalValue");
+    return "redirect:/redirectAttribute/redirect/{uriTemplateKey}";
+}
+
+@ResponseBody
+@GetMapping("/redirect/{uriTemplateKey}")
+public String redirect(@PathVariable String uriTemplateKey, @RequestParam String normalKey) {
+    return "redirectAttribute->redirect->uriTemplateKey:" + uriTemplateKey + ",normalKey:" + normalKey;
+}
+```
+
+通过访问控制器方法`index`重定向后浏览器地址栏显示结果如下：
+
+http://localhost:8080/spring_mvc_controller/redirectAttribute/redirect/uriTemplateValue?normalKey=normalValue
+
+其中`uriTemplateKey`作为了URI template公开变量，剩余的属性`normalKey`自动附加为查询参数。
 
 
 
-如果专门为重定向准备了模型实例，则将原始类型属性作为查询参数附加可以是期望的结果。但是，在带注解的控制器中，模型可以包含为渲染目的而添加的其他属性（例如，下拉字段值）。为了避免在URL中出现此类属性的可能性，`@RequestMapping`方法可以声明RedirectAttributes类型的参数，并使用它来指定可供RedirectView使用的确切属性。如果方法重定向，则使用RedirectAttributes的内容。否则，使用模型的内容。
+如果专门为重定向准备了模型实例，则将此类模型实例属性作为重定向查询参数附加可以是合理的。但是，在带注解的控制器中，模型也可以包含为渲染目的而添加的其他属性，这类模型属性在重定向时也会展示到查询参数中，这是不合理的。为了避免在URL中出现此类属性的可能性，`@RequestMapping`方法可以声明RedirectAttributes类型的参数，并使用它来为RedirectView指定专用的属性。如果方法重定向，则使用RedirectAttributes的内容。否则，使用模型的属性。
 
 
 
-RequestMappingHandlerAdapter提供了一个名为ignoreDefaultModelOnRedirect的标志，您可以使用该标志指示如果控制器方法重定向，则永远不应使用默认模型的内容。相反，控制器方法应声明RedirectAttributes类型的属性，如果不这样做，则不应将任何属性传递给RedirectView。MVC命名空间和MVC Java配置都将此标志设置为false，以保持向后兼容性。但是，对于新应用程序，我们建议将其设置为true。
+RequestMappingHandlerAdapter提供了一个名为ignoreDefaultModelOnRedirect的标志，您可以使用该标志指示如果控制器方法重定向，则永远不应使用默认模型的内容。相反，控制器方法应该声明RedirectAttributes类型的属性，如果不这样做，则不会传递任何属性给RedirectView。MVC XML配置和MVC Java配置都将此标志设置为false，以保持向后兼容性。但是，对于新应用程序，建议将其设置为true。
+
+```xml
+<mvc:annotation-driven ignore-default-model-on-redirect="true"/>
+```
 
 
 
@@ -677,36 +707,37 @@ RequestMappingHandlerAdapter提供了一个名为ignoreDefaultModelOnRedirect的
 以下示例显示如何定义重定向：
 
 ```java
-@PostMapping("/files/{path}")
-public String upload(...) {
-    // ...
-    return "redirect:files/{path}";
+@RequestMapping("/index3/{uriTemplateKey}")
+public String index3() {
+    return "redirect:/redirectAttribute/uriTemplateIgnoreDefaultModel/{uriTemplateKey}";
 }
 ```
 
-将数据传递到重定向目标的另一种方法是使用flash属性。与其他重定向属性不同，Flash属性保存在HTTP会话中（因此，不会出现在URL中）。
+将数据传递到重定向目标的另一种方法是使用Flash属性。与其他重定向属性不同，Flash属性保存在HTTP Session中（因此不会出现在URL中）。
 
 
 
 ### Flash Attributes
 
-Flash属性为一个请求提供了一种存储打算在另一个请求中使用的属性的方法。重定向时最常需要这种方法 - 例如，Post-Redirect-Get模式。Flash重定向（通常在会话中）之前临时保存Flash属性，以便在重定向后对请求可用并立即删除。
-
-Spring MVC有两个主要的抽象支持flash属性。FlashMap用于保存Flash属性，而FlashMapManager用于存储，检索和管理FlashMap实例。
+Flash Attributes为一个请求提供了一种存储属性的方式，这些属性计划使用在另外一个请求中。重定向时最常需要这种方法 - 例如，Post-Redirect-Get模式。Flash attributes 在对请求的重定向生效之前被临时存储（通常是在session中)，并且在重定向之后被立即移除（即在重定向后的请求中，通过Session域获取不到该属性）。
 
 
 
-Flash属性支持始终处于“打开”状态，无需显式启用。但是，如果不使用，它永远不会导致HTTP会话创建。在每个请求中，都有一个“输入”FlashMap，其中包含从先前请求（如果有）传递的属性，以及一个“输出”FlashMap，其中包含要为后续请求保存的属性。两个FlashMap实例都可以通过RequestContextUtils中的静态方法从Spring MVC中的任何位置访问。
+Spring MVC为支持Flash Attributes提供了两个特定的集合。FlashMap用于保存Flash Attributes，而FlashMapManager用于存储，检索和管理FlashMap实例。
 
 
 
-带注解的控制器通常不需要直接使用FlashMap。相反，@RequestMapping方法可以接受RedirectAttributes类型的参数，并使用它为重定向场景添加flash属性。通过RedirectAttributes添加的Flash属性会自动传播到“输出”FlashMap。同样，在重定向之后，“输入”FlashMap的属性会自动添加到为目标URL提供服务的控制器的模型中。
+Spring MVC默认支持Flash Attributes，无需显式启用。但如果不使用，也不会在HTTP Session中创建。对于每一个请求，都有一个“input”的FlashMap，其中包含从上一次请求传递过来的属性，以及一个“output”的FlashMap，其中包含了要为后续请求保存的属性。两个FlashMap实例都可以通过RequestContextUtils中的静态方法从Spring MVC中的任何位置访问。也可以通过`org.springframework.web.servlet.DispatcherServlet.INPUT_FLASH_MAP`这个Key从Request域中获取对应的`input`的值。
 
 
 
-> **匹配请求到flash属性**
+带注解的控制器通常不需要直接使用FlashMap。相反，@RequestMapping方法可以接受RedirectAttributes类型的参数，并使用它为重定向场景添加Flash Attributes。通过RedirectAttributes添加的Flash Attributes会自动传播到“output”FlashMap。同样，在重定向之后，“input”FlashMap的属性也会自动添加到为目标URL提供服务的控制器的模型中。
+
+
+
+> **匹配请求到Flash Attributes**
 >
-> Flash属性的概念存在于许多其他Web框架中，并且已经证明有时会暴露于并发问题。这是因为，根据定义，Flash属性将被存储直到下一个请求。但是，非常“下一个”请求可能不是预期的接收者而是另一个异步请求（例如，轮询或资源请求），在这种情况下，过早删除flash属性。
+> Flash Attributes的概念存在于许多其他Web框架中，并且已经证明有时会暴露于并发问题。这是因为，根据定义，Flash Attributes将被存储直到下一个请求。但是，“下一个”请求可能不是预期的接收者而是另一个异步请求（例如，轮询或资源请求），在这种情况下，过早删除Flash Attributes。
 >
 > 
 >
@@ -819,7 +850,7 @@ public String handle(@Valid @RequestPart("meta-data") MetaData metadata,
 
 ### @RequestBody
 
-您可以使用@RequestBody注解通过HttpMessageConverter将请求主体读取并反序列化为Object。以下示例使用@RequestBody参数：
+可以使用@RequestBody注解通过HttpMessageConverter读取请求主体并反序列化为Object。以下示例使用@RequestBody参数：
 
 ```java
 @PostMapping("/accounts")
@@ -828,9 +859,9 @@ public void handle(@RequestBody Account account) {
 }
 ```
 
-您可以使用MVC配置的“Message Converters ”选项来配置或自定义消息转换。
+可以使用MVC配置的“Message Converters ”选项来配置或自定义消息转换。
 
-您可以将@RequestBody与javax.validation.Valid或Spring的@Validated注释结合使用，这两种注释都会导致应用标准Bean验证。默认情况下，验证错误会导致MethodArgumentNotValidException，并将其转换为400（BAD_REQUEST）响应。或者，您可以通过Errors或BindingResult参数在控制器内本地处理验证错误，如以下示例所示：
+可以将@RequestBody与javax.validation.Valid或Spring的@Validated注释结合使用，这两种注解都会应用标准Bean验证。默认情况下，验证错误会导致MethodArgumentNotValidException，并将其转换为400（BAD_REQUEST）响应。可以通过Errors或BindingResult参数在控制器内本地处理验证错误，如以下示例所示：
 
 ```java
 @PostMapping("/accounts")
@@ -843,7 +874,7 @@ public void handle(@Valid @RequestBody Account account, BindingResult result) {
 
 ### HttpEntity
 
-HttpEntity与使用@RequestBody或多或少相同，但它基于一个公开请求标题和正文的容器对象。
+HttpEntity与使用@RequestBody或多或少相同，但它包含公开请求头和请求体。
 
 ```java
 @PostMapping("/accounts")
@@ -856,7 +887,7 @@ public void handle(HttpEntity<Account> entity) {
 
 ### @ResponseBody
 
-您可以在方法上使用@ResponseBody批注，以通过HttpMessageConverter将返回序列化到响应主体。
+您可以在方法上使用@ResponseBody注解，以通过HttpMessageConverter将返回序列化到响应主体。
 
 ```java
 @GetMapping("/accounts/{id}")
@@ -866,7 +897,9 @@ public Account handle() {
 }
 ```
 
-类级别也支持@ResponseBody，在这种情况下，它由所有控制器方法继承。这是@RestController的效果，它只不过是一个用@Controller和@ResponseBody标记的元注释。
+类级别也支持@ResponseBody，在这种情况下，所有控制器方法将继承。
+
+@RestController是一个用@Controller和@ResponseBody元注解组合而成的注解。
 
 您可以使用MVC配置的“Message Converters ”选项来配置或自定义消息转换。
 
@@ -891,11 +924,11 @@ public ResponseEntity<String> handle() {
 
 ### Jackson JSON
 
-Spring为Jackson JSON库提供支持。
+Spring为Jackson JSON库提供了支持。
 
-JSON 视图
+**JSON 视图**
 
-Spring MVC为Jackson的序列化视图提供内置支持，允许仅渲染Object中所有字段的子集。要将其与@ResponseBody或ResponseEntity控制器方法一起使用，您可以使用Jackson的@JsonView批注来激活序列化视图类，如以下示例所示：
+Spring MVC为Jackson的序列化视图提供内置支持，允许仅渲染Object中所有字段的子集。要将其与@ResponseBody或ResponseEntity控制器方法一起使用，您可以使用Jackson的@JsonView注解来激活序列化视图类，如以下示例所示：
 
 ```java
 @RestController
