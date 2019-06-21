@@ -1,6 +1,6 @@
 # 带注解的Controller
 
-Spring MVC提供了一个基于注解的编程模型，其中`@Controller`和`@RestController`组件使用注解表示请求映射，请求输入，异常处理等等。带注解的Controller具有灵活的方法签名，不必扩展基类，也不必实现特定的接口。例子如下：
+Spring MVC提供了一个基于注解的编程模型，其中`@Controller`和`@RestController`注解表示请求映射，请求输入，异常处理等等。带注解的Controller具有灵活的方法签名，不必扩展基类，也不必实现特定的接口。例子如下：
 
 ```java
 @Controller
@@ -992,7 +992,7 @@ public class UserController extends AbstractController {
 
 `@ModelAttribute`注解
 
-- 使用在@RequestMapping标注的方法中的**方法参数**上，用于创建或访问模型中的对象，并通过WebDataBinder将其绑定到请求。
+- 使用在@RequestMapping标注的方法中的**方法参数**上，用于创建或访问模型中的对象，并通过WebDataBinder将请求参数绑定到模型数据。
 - 作为@Controller或@ControllerAdvice类中的方法级注解，会在当前类任何@RequestMapping方法调用之前初始化模型。
 - 使用在@RequestMapping方法上标记其返回值是一个模型属性。
 
@@ -1040,17 +1040,20 @@ public Account handle() {
 
 ## 数据绑定（DataBinder）
 
+> DataBinder允许我们在请求到达目标处理方法前，对请求值做出更改。然后再对目标处理方法参数进行绑定。若目标方法不存在方法参数，也即不需要进行数据绑定，@InitBinder方法不会生效。
+
 @Controller或@ControllerAdvice类可以使用@InitBinder方法初始化`WebDataBinder`的实例，而@InitBinder方法又有如下作用：
 
 - 将请求参数（即表单或查询数据）绑定到模型对象。
+  事实上，不添加@InitBinder方法，WebDataBinder也会将请求参数绑定到模型对象，使用@InitBinder方法后，允许WebDataBinder将请求参数绑定到模型对象时，使用WebDataBinder做出一些自定义的绑定操作。
 - 将基于字符串的请求值（例如请求参数，路径变量，请求头，cookie等）转换为目标类型的控制器方法参数
 - 在渲染HTML表单时将模型对象值格式化为String值。
 
-@InitBinder方法中可以注册特定于控制器的java.bean.PropertyEditor或Spring Converter和Formatter组件。此外，@InitBinder方法中还可以使用MVC配置在全局共享的FormattingConversionService中注册的Converter和Formatter类型。
+@InitBinder方法中可以注册区别于控制器的java.bean.PropertyEditor或Spring Converter和Formatter组件。此外，@InitBinder方法中还可以使用MVC配置在全局共享的FormattingConversionService中注册的Converter和Formatter类型。
 
 @InitBinder方法支持许多与@RequestMapping方法相同的参数，但@ModelAttribute（命令对象）参数除外。
 
-通常，它们使用WebDataBinder参数（用于注册）和void返回值声明。
+通常，必须使用WebDataBinder参数（用于注册自定义的 Formater，验证器和PropertyEditors）作为其中一个参数且返回值必须为void。
 
 示例如下：
 
@@ -1083,6 +1086,108 @@ public class FormController {
     // ...
 }
 ```
+
+
+
+> WebDataBinder 是 DataBinder 的子类，用于将Web请求参数绑定到指定的JavaBean对象。设计用于Web环境，不依赖于Servlet API。
+>
+> 可以用来注册自定义的 Formater，验证器和PropertyEditors。
+>
+> ```java
+> WebDataBinder.addCustomFormatter(..);
+> WebDataBinder.addValidators(..);
+> WebDataBinder.registerCustomEditor(..);
+> ```
+
+在没有指定@InitBinder的`value`属性的前提下，@InitBinder方法将会被每一个HTTP请求调用。
+
+每次调用@InitBinder方法时，都会向WebDataBinder传递一个新的实例。
+
+为了更具体地说明我们的InitBinder方法适用于哪些对象，我们可以提供注解@InitBinder的'value'元素。'value'元素是该init-binder方法应该应用于的命令/表单属性和/或请求参数的单个或多个名称。
+
+```java
+@InitBinder("user")
+public void customizeBinding (WebDataBinder binder) {...}
+```
+
+我们可以定义多个具有不同名称的@InitBinder方法。也可以定义具有相同名称的多个@InitBinder方法。
+
+
+
+### 自定义PropertyEditors
+
+通过`WebDataBinder.registerCustomEditor(..);`可以注册一个自定义的编辑器。
+
+有两个重载的API如下：
+
+```java
+//对所有的目标类型requiredType使用同一个属性编辑器propertyEditor
+public void registerCustomEditor(Class<?> requiredType, PropertyEditor propertyEditor){}
+//目标类型为requiredType且属性名为field使用属性编辑器propertyEditor
+public void registerCustomEditor(@Nullable Class<?> requiredType, @Nullable String field, PropertyEditor propertyEditor){}
+```
+
+
+
+### 自定义 Formater
+
+从Spring 3开始，新的格式化方法可以用来替代 PropertyEditors。
+
+Spring 3引入了一个简单方便的Formatter SPI，为客户端环境提供了一个简单而强大的PropertyEditors替代方案。 
+
+通常，在需要实现通用类型转换逻辑时使用Converter SPI; 例如，用于在java.util.Date和java.lang.Long之间进行转换。 
+
+当您在客户端环境（例如Web应用程序）中工作时，请使用Formatter SPI，并且需要解析和打印本地化的字段值。 ConversionService为两个SPI提供统一的类型转换API。
+
+
+
+Formatters指定要在用户界面中呈现的数据格式。它们还提供了一种将用户界面的字符串输入转换为Java数据类型的方法。
+
+Converter 用于将一种类型转换为另一种类型。
+
+```java
+@InitBinder("trade")
+public void formatter(WebDataBinder dataBinder) {
+    DateFormatter dateFormatter = new DateFormatter();
+    dateFormatter.setPattern("yyyy-MM-dd");
+    dataBinder.addCustomFormatter(new Formatter<LocalDate>() {
+        @Override
+        public LocalDate parse(String text, Locale locale) throws ParseException {
+            return LocalDate.parse(text, DateTimeFormatter.ISO_DATE);
+        }
+
+        @Override
+        public String print(LocalDate date, Locale locale) {
+            return DateTimeFormatter.ISO_DATE.format(date);
+        }
+    }, "tradeDate");
+
+    NumberStyleFormatter numberFormatter = new NumberStyleFormatter("#,###,###,###.##");
+    dataBinder.addCustomFormatter(numberFormatter, "amount");
+}
+```
+
+
+
+Spring 3 Formatter API提供了一种将注解绑定到org.springframework.format.Formatter实现的工具。这意味着在创建Formatter时我们可以定义相应的注解并将其绑定到我们的格式化程序。不需要添加@InitBinder方法。
+
+目前，Spring提供了两个预定义格式化注解：@NumberFormat和@DateTimeFormat。
+
+```java
+public class Order {
+    private long orderId;
+    @NumberFormat(pattern = "#,###,###,###.##")
+    private BigDecimal amount;
+    @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+    private LocalDate tradeDate;
+}
+```
+
+
+
+### 自定义Validator
+
+
 
 
 
