@@ -1127,6 +1127,28 @@ public void registerCustomEditor(Class<?> requiredType, PropertyEditor propertyE
 public void registerCustomEditor(@Nullable Class<?> requiredType, @Nullable String field, PropertyEditor propertyEditor){}
 ```
 
+#### 使用@RequestParam自定义数据绑定
+
+```java
+@Controller
+@RequestMapping("/")
+public class TradeController {
+
+  @InitBinder("tradeDate")
+  public void customizeBinding(WebDataBinder binder) {
+      SimpleDateFormat dateFormatter = new SimpleDateFormat("yyyy-MM-dd");
+      binder.registerCustomEditor(Date.class,
+              new CustomDateEditor(dateFormatter, true));
+  }
+
+  @GetMapping("/trade")
+  @ResponseBody
+  public String handleRequest(@RequestParam Date tradeDate) {
+      return "request received for " + tradeDate;
+  }
+}
+```
+
 
 
 ### 自定义 Formater
@@ -1167,7 +1189,7 @@ public void formatter(WebDataBinder dataBinder) {
 }
 ```
 
-
+#### 基于注解的 Formatter
 
 Spring 3 Formatter API提供了一种将注解绑定到org.springframework.format.Formatter实现的工具。这意味着在创建Formatter时我们可以定义相应的注解并将其绑定到我们的格式化程序。不需要添加@InitBinder方法。
 
@@ -1183,11 +1205,397 @@ public class Order {
 }
 ```
 
+#### 创建自定义 Formatter
+
+Spring Formatter 继承了 Printer 和 Parser 接口。
+
+```java
+package org.springframework.format;
+
+public interface Formatter<T> extends Printer<T>, Parser<T> {
+}
+```
+
+若要实现自定义的 Formatter，实现这个 Formatter 接口即可。如：
+
+```java
+public class LocationFormatter implements Formatter<Location> {
+    private Style style = Style.FULL;
+
+    public void setStyle (Style style) {
+        this.style = style;
+    }
+    @Override
+    public Location parse(String text, Locale locale) throws ParseException {
+        if (text != null) {
+            String[] parts = text.split(",");
+            if (style == Style.FULL && parts.length == 4) {
+                Location location = new Location();
+                location.setStreet(parts[0].trim());
+                location.setCity(parts[1].trim());
+                location.setZipCode(parts[2].trim());
+                location.setCounty(parts[3].trim());
+                return location;
+            } else if (style == Style.REGION && parts.length == 3) {
+                Location location = new Location();
+                location.setCity(parts[0].trim());
+                location.setZipCode(parts[1].trim());
+                location.setCounty(parts[2].trim());
+                return location;
+            }
+        }
+        return null;
+    }
+
+    @Override
+    public String print(Location location, Locale locale) {
+        if (location == null) {
+            return "";
+        }
+        switch (style) {
+            case FULL:
+                return String.format(locale, "%s, %s, %s, %s", location.getStreet(), location.getCity(),
+                        location.getZipCode(), location.getCounty());
+            case REGION:
+                return String.format(locale, "%s, %s, %s", location.getCity(), location.getZipCode(),
+                        location.getCounty());
+        }
+        return location.toString();
+    }
 
 
-### 自定义Validator
+    public enum Style {
+        FULL,
+        REGION
+    }
+}
+```
+
+然后可以配置为全局或局部格式化器（通过 @InitBinder）。全局配置如下：
+
+```xml
+<bean class="org.springframework.format.support.FormattingConversionServiceFactoryBean" id="formattingConversionService">
+    <property name="formatters">
+        <set>
+            <bean class="com.solverpeng.config.LocationFormatter"/>
+        </set>
+    </property>
+</bean>
+
+<mvc:annotation-driven enable-matrix-variables="true" ignore-default-model-on-redirect="true" conversion-service="formattingConversionService"/>
+```
 
 
+
+#### 自定义注解 Formatter
+
+Spring3 格式化 API 提供了一种将注解绑定到org.springframework.format.Formatter实现的功能。接下来演示如何自定义格式化注解。
+
+要将Annotation绑定到格式化程序，我们必须实现AnnotationFormatterFactory接口。
+
+```java
+package org.springframework.format;
+public interface AnnotationFormatterFactory<A extends Annotation> {
+
+    Set<Class<?>> getFieldTypes();
+
+    Printer<?> getPrinter(A annotation, Class<?> fieldType);
+
+    Parser<?> getParser(A annotation, Class<?> fieldType);
+}
+```
+
+实体类：
+
+```java
+public class Customer {
+    private Long id;
+    private String name;
+    private Address address;
+
+   //getters and setters
+}
+
+public class Address {
+    private String street;
+    private String city;
+    private String county;
+    private String zipCode;
+
+    //getters and setters
+}
+```
+
+创建 Formatter：
+
+```java
+import org.springframework.format.Formatter;
+import java.text.ParseException;
+import java.util.Locale;
+
+public class AddressFormatter implements Formatter<Address> {
+    private Style style = Style.FULL;
+
+    public void setStyle (Style style) {
+        this.style = style;
+    }
+
+    @Override
+    public Address parse (String text, Locale locale) throws ParseException {
+           .....
+        return address;
+    }
+
+    @Override
+    public String print (Address a, Locale l) {
+         ...
+        return addressString;
+    }
+
+    public enum Style {
+        FULL,
+        REGION
+    }
+}
+```
+
+创建格式化注解：
+
+```java
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
+
+@Target({ElementType.METHOD, ElementType.FIELD, ElementType.PARAMETER})
+@Retention(RetentionPolicy.RUNTIME)
+public @interface AddressFormat {
+
+    AddressFormatter.Style style () default AddressFormatter.Style.FULL;
+}
+```
+
+在实体类中使用注解：
+
+```java
+package com.logicbig.example;
+
+public class Customer {
+    private Long id;
+    private String name;
+    @AddressFormat(style = AddressFormatter.Style.FULL)
+    private Address address;
+
+    //getters and setters
+}
+```
+
+通过实现AnnotationFormatterFactory绑定我们的格式化Annotation：
+
+```java
+import org.springframework.format.AnnotationFormatterFactory;
+import org.springframework.format.Parser;
+import org.springframework.format.Printer;
+
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
+
+public class AddressFormatAnnotationFormatterFactory implements
+                    AnnotationFormatterFactory<AddressFormat> {
+    @Override
+    public Set<Class<?>> getFieldTypes () {
+        return new HashSet<>(Arrays.asList(Address.class));
+    }
+
+    @Override
+    public Printer<?> getPrinter (AddressFormat annotation, Class<?> fieldType) {
+        return getAddressFormatter(annotation, fieldType);
+    }
+
+    @Override
+    public Parser<?> getParser (AddressFormat annotation, Class<?> fieldType) {
+        return getAddressFormatter(annotation, fieldType);
+    }
+
+    private AddressFormatter getAddressFormatter (AddressFormat annotation,
+                                                               Class<?> fieldType) {
+        AddressFormatter formatter = new AddressFormatter();
+        formatter.setStyle(annotation.style());
+        return formatter;
+    }
+}
+```
+
+注册AnnotationFormatterFactory：
+
+```java
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Import;
+import org.springframework.format.FormatterRegistry;
+import org.springframework.web.servlet.config.annotation.EnableWebMvc;
+import org.springframework.web.servlet.config.annotation.WebMvcConfigurerAdapter;
+
+@EnableWebMvc
+@Configuration
+@Import(MyViewConfig.class)
+public class MyWebConfig extends WebMvcConfigurerAdapter {
+    @Override
+    public void addFormatters (FormatterRegistry registry) {
+
+        AddressFormatAnnotationFormatterFactory factory = new
+                            AddressFormatAnnotationFormatterFactory();
+
+        registry.addFormatterForFieldAnnotation(factory);
+    }
+  .....
+}
+```
+
+
+
+### 自定义 Validator
+
+
+
+### 自定义ConfigurableWebBindingInitializer
+
+Spring MVC使用WebBindingInitializer初始化给定请求的WebDataBinder。我们可以使用ConfigurableWebBindingInitializer初始化自定义WebBindingInitializer。在下面的示例中，我们将通过ConfigurableWebBindingInitializer全局注册一个自定义PropertyEditor。为了实现这一点，我们不会使用@EnableWebMvc注释，而是使用一个简单的@Configuration类，它将直接扩展WebMvcConfigurationSupport，然后我们将覆盖getConfigurableWebBindingInitializer（）方法。
+
+> 如果WebMvcConfigurer没有公开需要配置的更高级设置，请考虑删除@EnableWebMvc注释并直接从WebMvcConfigurationSupport或DelegatingWebMvcConfiguration扩展
+
+请注意，RequestMappingHandlerAdapter使用ConfigurableWebBindingInitializer来为请求应用数据conversion，formatting 和validation 。
+
+```java
+@Controller
+@RequestMapping("/")
+public class TradeController {
+
+  @GetMapping("/trade")
+  @ResponseBody
+  public String handleRequest(@RequestParam Date tradeDate) {
+      return "request received for " + tradeDate;
+  }
+}
+```
+
+```java
+@Configuration
+@ComponentScan
+public class MyWebConfig extends WebMvcConfigurationSupport {
+
+  @Override
+  protected ConfigurableWebBindingInitializer getConfigurableWebBindingInitializer() {
+      ConfigurableWebBindingInitializer initializer = super.getConfigurableWebBindingInitializer();
+      initializer.setPropertyEditorRegistrar(propertyEditorRegistry -> {
+          SimpleDateFormat dateFormatter = new SimpleDateFormat("yyyy-MM-dd");
+          propertyEditorRegistry.registerCustomEditor(Date.class,
+                  new CustomDateEditor(dateFormatter, true));
+      });
+      return initializer;
+  }
+}
+```
+
+在上面的示例中，我们并未完全替换ConfigurableWebBindingInitializer，而是将其自定义为全局使用自定义PropertyEditor。
+
+### 使用Immutable Bean类数据绑定
+
+从Spring 5开始，数据绑定现在可以使用不可变类。以前必须有一个无参数构造函数和适当的setter来根据请求参数初始化bean。
+
+
+
+我们现在使用单个公共构造函数自动检测数据类，只要保留参数名称或声明@ConstructorProperties注解，就可以解析请求参数的构造函数参数。这适用于Spring MVC以及WebFlux。
+
+```java
+package com.logicbig.example;
+
+import java.beans.ConstructorProperties;
+
+public class CustomerInfo {
+  private String customerId;
+  private String zipCode;
+
+  @ConstructorProperties({"id", "zip"})
+  public CustomerInfo(String customerId, String zipCode) {
+      this.customerId = customerId;
+      this.zipCode = zipCode;
+  }
+    
+  public String getCustomerId() {
+      return customerId;
+  }
+
+  public String getZipCode() {
+      return zipCode;
+  }
+
+  @Override
+  public String toString() {
+      return "CustomerInfo{" +
+              "customerId='" + customerId + '\'' +
+              ", zipCode='" + zipCode + '\'' +
+              '}';
+  }
+
+}
+```
+
+```java
+public class OrderInfo {
+
+  private final String id;
+  private final String zip;
+
+  public OrderInfo(String id, String zip) {
+      this.id = id;
+      this.zip = zip;
+  }
+
+  public String getId() {
+      return id;
+  }
+
+  public String getZip() {
+      return zip;
+  }
+
+  @Override
+  public String toString() {
+      return "OrderInfo{" +
+              "id='" + id + '\'' +
+              ", zip='" + zip + '\'' +
+              '}';
+  }
+}
+```
+
+控制器：
+
+```java
+@RestController
+public class CustomerController {
+
+  @GetMapping("/customer")
+  public String getCustomerInfo(CustomerInfo ci) {
+      return ci.toString();
+  }
+
+  @GetMapping("/order")
+  public String getCustomerInfo(OrderInfo oi) {
+      return oi.toString();
+  }
+}
+```
+
+对于请求：`localhost:8080/customer?id=23&zip=1111`
+
+响应为：`CustomerInfo{customerId='23',zipCode='1111'}`
+
+对于请求：`localhost:8080/order?id=23&zip=1111`
+
+响应为：`OrderInfo{id='23',zip='1111'}`
 
 
 
