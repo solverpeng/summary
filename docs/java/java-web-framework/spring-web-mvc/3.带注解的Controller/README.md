@@ -1053,7 +1053,7 @@ public Account handle() {
 
 @InitBinder方法支持许多与@RequestMapping方法相同的参数，但@ModelAttribute（命令对象）参数除外。
 
-通常，必须使用WebDataBinder参数（用于注册自定义的 Formater，验证器和PropertyEditors）作为其中一个参数且返回值必须为void。
+通常，必须使用WebDataBinder参数（用于注册自定义的Formater，验证器和PropertyEditors）作为其中一个参数且返回值必须为void。
 
 示例如下：
 
@@ -1461,9 +1461,9 @@ public class MyWebConfig extends WebMvcConfigurerAdapter {
 
 ### 自定义ConfigurableWebBindingInitializer
 
-Spring MVC使用WebBindingInitializer初始化给定请求的WebDataBinder。我们可以使用ConfigurableWebBindingInitializer初始化自定义WebBindingInitializer。在下面的示例中，我们将通过ConfigurableWebBindingInitializer全局注册一个自定义PropertyEditor。为了实现这一点，我们不会使用@EnableWebMvc注释，而是使用一个简单的@Configuration类，它将直接扩展WebMvcConfigurationSupport，然后我们将覆盖getConfigurableWebBindingInitializer（）方法。
+Spring MVC使用 WebBindingInitializer 初始化给定请求的 WebDataBinder。我们可以使用ConfigurableWebBindingInitializer 初始化自定义 WebBindingInitializer 。在下面的示例中，我们将通过 ConfigurableWebBindingInitializer 全局注册一个自定义 PropertyEditor。为了实现这一点，我们不会使用 @EnableWebMvc 注释，而是使用一个简单的 @Configuration类，它将直接扩展WebMvcConfigurationSupport，然后我们将覆盖getConfigurableWebBindingInitializer() 方法。
 
-> 如果WebMvcConfigurer没有公开需要配置的更高级设置，请考虑删除@EnableWebMvc注释并直接从WebMvcConfigurationSupport或DelegatingWebMvcConfiguration扩展
+> 如果WebMvcConfigurer没有公开需要配置的更高级设置，请考虑删除@EnableWebMvc注解并直接从WebMvcConfigurationSupport或DelegatingWebMvcConfiguration扩展
 
 请注意，RequestMappingHandlerAdapter使用ConfigurableWebBindingInitializer来为请求应用数据conversion，formatting 和validation 。
 
@@ -1606,9 +1606,6 @@ public class CustomerController {
 ```java
 @Controller
 public class SimpleController {
-
-    // ...
-
     @ExceptionHandler
     public ResponseEntity<String> handle(IOException ex) {
         // ...
@@ -1616,7 +1613,7 @@ public class SimpleController {
 }
 ```
 
-异常可能与顶级异常（即抛出直接IOException）或顶级包装器异常中的直接原因相匹配（例如，包含在IllegalStateException内的IOException）。
+异常可能与顶级异常（即抛出直接IOException）或顶级包装器异常中的直接原因相匹配（如包含在IllegalStateException内的IOException）。
 
 
 
@@ -1633,7 +1630,7 @@ public ResponseEntity<String> handle(IOException ex) {
 }
 ```
 
-您甚至可以使用具有非常通用参数签名的特定异常类型列表，如下：
+甚至可以使用具有非常通用参数签名的特定异常类型列表，如下：
 
 ```java
 @ExceptionHandler({FileSystemException.class, RemoteException.class})
@@ -1656,11 +1653,11 @@ public ResponseEntity<String> handle(Exception ex) {
 
 
 
-在多@ControllerAdvice安排中，我们建议在@ControllerAdvice上声明您的主根异常映射，并使用相应的顺序进行优先级排序。虽然根异常匹配优先于某个原因，但这是在给定控制器或@ControllerAdvice类的方法中定义的。这意味着优先级较高的@ControllerAdvice bean上的原因匹配优先于较低优先级的@ControllerAdvice bean上的任何匹配（例如，root）。
+在多@ControllerAdvice中，建议在@ControllerAdvice上声明主根异常映射，并使用相应的顺序进行优先级排序。虽然根异常匹配优先于某个原因，但这是在给定控制器或@ControllerAdvice类的方法中定义的。这意味着优先级较高的@ControllerAdvice bean上的 case 匹配优先于较低优先级的@ControllerAdvice Bean上的任何匹配（如root级别）。
 
 
 
-最后但并非最不重要的是，@ ExceptionHandler方法实现可以选择通过以原始形式重新抛出它来退出处理给定的异常实例。这在您仅对根级别匹配或在无法静态确定的特定上下文中的匹配中感兴趣的情况下非常有用。重新抛出的异常通过剩余的解析链传播，就好像给定的@ExceptionHandler方法首先不匹配一样。
+最后但并非是最重要的是，@ ExceptionHandler方法实现可以选择通过以原始形式重新抛出它来退出处理给定的异常实例。这在仅对根级别匹配或在无法静态确定的特定上下文中的匹配中感兴趣的情况下非常有用。重新抛出的异常通过剩余的解析链传播，就好像给定的@ExceptionHandler方法首先不匹配一样。
 
 
 
@@ -1717,19 +1714,19 @@ REST服务的一个常见要求是在响应正文中包含错误详细信息。S
 
 ## Controller Advice
 
-通常，@ ExceptionHandler，@ InitBinder和@ModelAttribute方法适用于声明它们的@Controller类（或类层次结构）。如果您希望此类方法更全局地应用（跨控制器），则可以在标有@ControllerAdvice或@RestControllerAdvice的类中声明它们。
+通常，@ExceptionHandler，@InitBinder 和 @ModelAttribute方法适用于声明它们的@Controller类。如果希望这类方法跨控制器应用，即这些方法适用于多个@Controller类的所有@RequestMapping方法，则可以在标有@ControllerAdvice或@RestControllerAdvice的类中声明它们。
 
 
 
-@ControllerAdvice用@Component标记，这意味着可以通过组件扫描将这些类注册为Spring bean。@RestControllerAdvice也是一个用@ControllerAdvice和@ResponseBody标记的元注释，这实际上意味着@ExceptionHandler方法通过消息转换（与视图分辨率或模板渲染相对）呈现给响应主体。
+@ControllerAdvice用@Component标记，意味着可以通过组件扫描将其注册为Spring Bean。@RestControllerAdvice也是一个用@ControllerAdvice和@ResponseBody标记的组合注解，这实际上意味着@ExceptionHandler方法通过消息转换呈现给响应主体。
 
 
 
-在启动时，@ RequestMapping和@ExceptionHandler方法的基础结构类检测@ControllerAdvice类型的Spring bean，然后在运行时应用它们的方法。全局@ExceptionHandler方法（来自@ControllerAdvice）应用于本地方法（来自@Controller）。相比之下，全局@ModelAttribute和@InitBinder方法在本地方法之前应用。
+在启动时，@RequestMapping和@ExceptionHandler方法的所在控制器类检测@ControllerAdvice类型的Spring Bean，然后在运行时应用它们的方法。@ControllerAdvice中全局的@ExceptionHandler方法应用于本地方法（来自@Controller）。相比之下，全局@ModelAttribute和@InitBinder方法在本地方法之前应用。
 
 
 
-默认情况下，@ ControllerAdvice方法适用于每个请求（即所有控制器），但您可以通过使用注释上的属性将其缩小到控制器的子集，如下例所示：
+默认情况下，@ControllerAdvice方法适用于每个请求（即所有控制器），但您可以通过使用注解上的属性将其缩小到控制器的子集，如下例所示：
 
 ```java
 // Target all Controllers annotated with @RestController
@@ -1745,5 +1742,79 @@ public class ExampleAdvice2 {}
 public class ExampleAdvice3 {}
 ```
 
-前面示例中的选择器在运行时进行评估，如果广泛使用，可能会对性能产生负面影响。有关更多详细信息，请参阅@ControllerAdvice javadoc。
+前面示例中的选择器在运行时进行评估，如果广泛使用，可能会对性能产生负面影响。
+
+
+
+以下示例显示如何在@ControllerAdvice类中使用@ModelAttribute来全局应用模型属性。
+
+我们将使用页面计数器和@ControllerAdvice类中的请求URI填充模型属性。
+
+```java
+package com.logicbig.example;
+
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.ControllerAdvice;
+import org.springframework.web.bind.annotation.ModelAttribute;
+import javax.servlet.http.HttpServletRequest;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.LongAdder;
+
+@ControllerAdvice
+public class PageCountersControllerAdvice {
+  //uri to counter map
+  private ConcurrentHashMap<String, LongAdder> counterMap = new ConcurrentHashMap<>();
+
+  @ModelAttribute
+  public void handleRequest(HttpServletRequest request, Model model) {
+      String requestURI = request.getRequestURI();
+      //counter increment for each access to a particular uri
+      counterMap.computeIfAbsent(requestURI, key -> new LongAdder())
+                .increment();
+      //populating counter in the model
+      model.addAttribute("counter", counterMap.get(requestURI).sum());
+      //populating request URI in the model
+      model.addAttribute("uri", requestURI);
+  }
+}
+```
+
+控制器：
+
+```java
+@Controller
+public class ProductsController {
+
+  @RequestMapping("/products/**")
+  public String handleRequest(){
+      //todo:prepare page content
+      return "app-page";
+  }
+}
+
+@Controller
+public class ServicesController {
+
+  @RequestMapping("/services/**")
+  public String handleRequest() {
+      //todo:prepare page content
+      return "app-page";
+  }
+}
+```
+
+视图：
+
+```html
+<html>
+<body>
+
+<p>Page counter: ${counter}</p>
+<p>App content .... at ${uri}</p>
+
+</body>
+</html>
+```
+
+不论是访问 "/products" 还是访问 "/services" 都能打印 counter 以及 uri 的值。
 

@@ -1,10 +1,10 @@
 # MVC配置
 
-MVC Java配置和MVC XML命名空间提供适用于大多数应用程序的默认配置，以及用于自定义它的配置API。
+MVC JAVA配置和MVC XML命名空间配置提供适用于大多数应用程序的默认配置，以及用于自定义它的配置API。
 
 ## 启用MVC配置
 
-在Java配置中，您可以使用@EnableWebMvc批注启用MVC配置，如以下示例所示：
+在JAVA配置中，可以使用@EnableWebMvc注解启用MVC配置，如以下示例所示：
 
 ```java
 @Configuration
@@ -13,7 +13,7 @@ public class WebConfig {
 }
 ```
 
-在XML配置中，您可以使用`<mvc:annotation-driven>`元素来启用MVC配置，如以下示例所示：
+在XML配置中，可以使用`<mvc:annotation-driven>`元素来启用MVC配置，如以下示例所示：
 
 ```java
 <?xml version="1.0" encoding="UTF-8"?>
@@ -31,13 +31,13 @@ public class WebConfig {
 </beans>
 ```
 
-前面的示例注册了许多Spring MVC基础结构bean，并适应类路径上可用的依赖项（例如，JSON，XML等的有效负载转换器）。
+前面的示例注册了许多Spring MVC基础结构BEAN，并适应类路径上可用的依赖项（例如，JSON，XML等的有效负载转换器）。
 
 
 
 ## MVC配置API
 
-在Java配置中，您可以实现WebMvcConfigurer接口，如以下示例所示：
+在JAVA配置中，可以实现WebMvcConfigurer接口，如以下示例所示：
 
 ```java
 @Configuration
@@ -48,17 +48,17 @@ public class WebConfig implements WebMvcConfigurer {
 }
 ```
 
-在XML中，您可以检查`<mvc:annotation-driven/>`的属性和子元素。您可以查看Spring MVC XML模式或使用IDE的代码完成功能来发现可用的属性和子元素。
+在XML中，可以检查`<mvc:annotation-driven/>`的属性和子元素。可以查看Spring MVC XML模式或使用IDE的代码完成功能来发现可用的属性和子元素。
 
 
 
 ## 类型转换
 
-默认格式化，安装了Number和Date类型，包括对@NumberFormat和@DateTimeFormat注释的支持。如果类路径中存在Joda-Time，则还会安装对Joda-Time格式库的完全支持。
+默认格式化，包含了Number和Date类型，包括对@NumberFormat和@DateTimeFormat注解的支持。如果类路径中存在Joda-Time，则还会包含对Joda-Time格式库的完全支持。
 
 
 
-在Java配置中，您可以注册自定义格式化程序和转换器，如以下示例所示：
+在JAVA配置中，可以注册自定义的 Formatter 和 Converter，如以下示例所示：
 
 ```java
 @Configuration
@@ -110,17 +110,17 @@ public class WebConfig implements WebMvcConfigurer {
 </beans>
 ```
 
-> 关何时使用FormatterRegistrar实现的更多信息，请参阅FormatterRegistrar SPI和FormattingConversionServiceFactoryBean。
+> 关于何时使用FormatterRegistrar实现的更多信息，请参阅FormatterRegistrar SPI和FormattingConversionServiceFactoryBean。
 
 
 
 ## 验证
 
-默认情况下，如果类路径上存在Bean Validation（例如，Hibernate Validator），则LocalValidatorFactoryBean将注册为全局Validator，以便与控制器方法参数一起使用@Valid和Validated。
+默认情况下，如果类路径存在Bean Validation（如Hibernate Validator），则LocalValidatorFactoryBean将注册为全局Validator，以便与控制器方法参数一起使用@Valid和Validated。
 
 
 
-在Java配置中，您可以自定义全局Validator实例，如以下示例所示：
+在JAVA配置中，可以自定义全局Validator实例，如以下示例所示：
 
 ```java
 @Configuration
@@ -152,7 +152,7 @@ public class WebConfig implements WebMvcConfigurer {
 </beans>
 ```
 
-请注意，您还可以在本地注册Validator实现，如以下示例所示：
+请注意，还可以在本地注册Validator实现，如以下示例所示：
 
 ```java
 @Controller
@@ -172,7 +172,7 @@ public class MyController {
 
 ## 拦截器
 
-在Java配置中，您可以注册拦截器以应用传入请求，如以下示例所示：
+在JAVA配置中，可以注册拦截器以拦截传入的请求，如以下示例所示：
 
 ```java
 @Configuration
@@ -207,11 +207,9 @@ public class WebConfig implements WebMvcConfigurer {
 
 
 
-
-
 ## Content Types
 
-您可以配置Spring MVC如何根据请求确定所请求的媒体类型（例如，Accept标头，URL路径扩展，查询参数等）。
+可以配置Spring MVC如何根据请求确定所请求的媒体类型（例如，Accept标头，URL路径扩展，查询参数等）。
 
 
 
@@ -223,7 +221,7 @@ public class WebConfig implements WebMvcConfigurer {
 
 
 
-在Java配置中，您可以自定义请求的内容类型解析，如以下示例所示：
+在JAVA配置中，可以自定义请求的内容类型解析，如以下示例所示：
 
 ```java
 @Configuration
@@ -255,11 +253,9 @@ public class WebConfig implements WebMvcConfigurer {
 
 
 
-
-
 ## Message Converters
 
-您可以通过重写configureMessageConverters（）（替换Spring MVC创建的默认转换器）或覆盖extendMessageConverters（）来自定义Java配置中的HttpMessageConverter（自定义默认转换器或将其他转换器添加到默认转换器）。
+可以通过重写configureMessageConverters()（替换Spring MVC创建的默认转换器）或覆盖extendMessageConverters()来自定义Java配置中的HttpMessageConverter（自定义默认转换器或将其他转换器添加到默认转换器）。
 
 
 
@@ -331,15 +327,13 @@ public class WebConfiguration implements WebMvcConfigurer {
 
 
 
-
-
 ## 视图控制器
 
 这是定义ParameterizableViewController的快捷方式，该方法在调用时立即转发到视图。如果在视图生成响应之前没有要执行的Java控制器逻辑，则可以在静态情况下使用它。
 
 
 
-以下Java配置示例将请求转发给名为home的视图：
+以下JAVA配置示例将请求转发给名为home的视图：
 
 ```java
 @Configuration
@@ -353,7 +347,7 @@ public class WebConfig implements WebMvcConfigurer {
 }
 ```
 
-以下示例与前面的示例实现相同的功能，但使用XML，使用<mvc：view-controller>元素：
+以下示例与前面的示例实现相同的功能，但使用XML，使用`<mvc:view-controller>`元素：
 
 ```xml
 <mvc:view-controller path="/" view-name="home"/>
@@ -412,7 +406,7 @@ MVC名称空间提供专用元素。以下示例适用于FreeMarker：
 </mvc:freemarker-configurer>
 ```
 
-在Java配置中，您可以添加相应的Configurer bean，如以下示例所示：
+在Java配置中，您可以添加相应的Configurer Bean，如以下示例所示：
 
 ```java
 @Configuration
@@ -436,13 +430,11 @@ public class WebConfig implements WebMvcConfigurer {
 
 
 
-
-
 ## 静态资源
 
 此选项提供了一种从基于资源的位置列表中提供静态资源的便捷方法。
 
-在下一个示例中，给定以/ resources开头的请求，相对路径用于在Web应用程序根目录下或/ static下的类路径上查找和提供相对于/ public的静态资源。资源将在未来一年内到期，以确保最大限度地使用浏览器缓存并减少浏览器发出的HTTP请求。还会评估Last-Modified标头，如果存在，则返回304状态代码。
+在下一个示例中，给定以/resources开头的请求，相对路径用于在Web应用程序根目录下或/static下的类路径上查找和提供相对于/public的静态资源。资源将在未来一年内到期，以确保最大限度地使用浏览器缓存并减少浏览器发出的HTTP请求。还会评估Last-Modified标头，如果存在，则返回304状态代码。
 
 
 
@@ -470,11 +462,11 @@ public class WebConfig implements WebMvcConfigurer {
     cache-period="31556926" />
 ```
 
-资源处理程序还支持一系列ResourceResolver实现和ResourceTransformer实现，您可以使用它们创建工具链以使用优化的资源。
+资源处理程序还支持一系列ResourceResolver实现和ResourceTransformer实现，可以使用它们创建工具链以使用优化的资源。
 
 
 
-您可以将VersionResourceResolver用于基于从内容，固定应用程序版本或其他计算的MD5哈希的版本化资源URL。ContentVersionStrategy（MD5哈希）是一个不错的选择 - 有一些值得注意的例外，例如与模块加载器一起使用的JavaScript资源。
+可以将VersionResourceResolver用于基于从内容，固定应用程序版本或其他计算的MD5哈希的版本化资源URL。ContentVersionStrategy（MD5哈希）是一个不错的选择 - 有一些值得注意的例外，例如与模块加载器一起使用的JavaScript资源。
 
 
 
@@ -509,7 +501,7 @@ public class WebConfig implements WebMvcConfigurer {
 </mvc:resources>
 ```
 
-然后，您可以使用ResourceUrlProvider重写URL并应用完整的解析器和转换器链 - 例如，插入版本。MVC配置提供了ResourceUrlProvider bean，以便可以将其注入其他bean。您还可以使用针对Thymeleaf，JSP，FreeMarker和其他具有依赖于HttpServletResponse #creditURL的URL标记的ResourceUrlEncodingFilter使重写透明。
+然后，可以使用ResourceUrlProvider重写URL并应用完整的解析器和转换器链 - 例如，插入版本。MVC配置提供了ResourceUrlProvider Bean，以便可以将其注入其他bean。还可以使用针对Thymeleaf，JSP，FreeMarker和其他具有依赖于HttpServletResponse #creditURL的URL标记的ResourceUrlEncodingFilter使重写透明。
 
 
 
@@ -521,15 +513,13 @@ WebJars也通过WebJarsResourceResolver支持，当类路径中存在org.webjars
 
 
 
-
-
 ## 默认Servlet
 
-Spring MVC允许将DispatcherServlet映射到/（从而覆盖容器的默认Servlet的映射），同时仍然允许容器的默认Servlet处理静态资源请求。它配置DefaultServletHttpRequestHandler，其URL映射为/ **，并且相对于其他URL映射具有最低优先级。
+Spring MVC允许将DispatcherServlet映射到`/`（从而覆盖容器的默认Servlet的映射），同时仍然允许容器的默认Servlet处理静态资源请求。它配置DefaultServletHttpRequestHandler，其URL映射为 `/**`，并且相对于其他URL映射具有最低优先级。
 
 
 
-此处理程序将所有请求转发到默认Servlet。因此，它必须按所有其他URL HandlerMappings的顺序保持最后。如果您使用<mvc：annotation-driven>就是这种情况。或者，如果您设置自己的自定义HandlerMapping实例，请确保将其order属性设置为低于DefaultServletHttpRequestHandler的值，即Integer.MAX_VALUE。
+此处理程序将所有请求转发到默认Servlet。因此，它必须按所有其他URL HandlerMappings的顺序保持最后。如果您使用`<mvc:annotation-driven>`就是这种情况。或者，如果设置自己的自定义HandlerMapping实例，请确保将其order属性设置为低于DefaultServletHttpRequestHandler的值，即Integer.MAX_VALUE。
 
 
 
@@ -553,7 +543,7 @@ public class WebConfig implements WebMvcConfigurer {
 <mvc:default-servlet-handler/>
 ```
 
-覆盖/ Servlet映射的警告是必须通过名称而不是路径来检索默认Servlet的RequestDispatcher。DefaultServletHttpRequestHandler尝试使用大多数主要Servlet容器的已知名称列表在启动时自动检测容器的默认Servlet（包括Tomcat，Jetty，GlassFish，JBoss，Resin，WebLogic和WebSphere）。如果使用不同的名称自定义配置默认Servlet，或者在默认Servlet名称未知的情况下使用其他Servlet容器，那么你必须显式提供默认的Servlet名称，如下例所示：
+覆盖`/`Servlet映射的警告是必须通过名称而不是路径来检索默认Servlet的RequestDispatcher。DefaultServletHttpRequestHandler尝试使用大多数主要Servlet容器的已知名称列表在启动时自动检测容器的默认Servlet（包括Tomcat，Jetty，GlassFish，JBoss，Resin，WebLogic和WebSphere）。如果使用不同的名称自定义配置默认Servlet，或者在默认Servlet名称未知的情况下使用其他Servlet容器，那么你必须显式提供默认的Servlet名称，如下例所示：
 
 ```java
 @Configuration
@@ -578,7 +568,7 @@ public class WebConfig implements WebMvcConfigurer {
 
 ## 路径匹配
 
-您可以自定义与路径匹配和URL处理相关的选项。有关各个选项的详细信息，请参阅PathMatchConfigurer javadoc。
+可以自定义与路径匹配和URL处理相关的选项。有关各个选项的详细信息，请参阅PathMatchConfigurer javadoc。
 
 
 
@@ -632,8 +622,6 @@ public class WebConfig implements WebMvcConfigurer {
 
 
 
-
-
 ## 高级Java配置
 
 @EnableWebMvc导入DelegatingWebMvcConfiguration，其中：
@@ -641,7 +629,7 @@ public class WebConfig implements WebMvcConfigurer {
 - 为Spring MVC应用程序提供默认的Spring配置
 - 检测并委派给WebMvcConfigurer实现以自定义该配置。
 
-对于高级模式，您可以删除@EnableWebMvc并直接从DelegatingWebMvcConfiguration扩展而不是实现WebMvcConfigurer，如以下示例所示：
+对于高级模式，可以删除@EnableWebMvc并直接从DelegatingWebMvcConfiguration扩展而不是实现WebMvcConfigurer，如以下示例所示：
 
 ```java
 @Configuration
@@ -652,13 +640,13 @@ public class WebConfig extends DelegatingWebMvcConfiguration {
 }
 ```
 
-您可以在WebConfig中保留现有方法，但现在您也可以从基类覆盖bean声明，并且您仍然可以在类路径上拥有任意数量的其他WebMvcConfigurer实现。
+可以在WebConfig中保留现有方法，但现在也可以从基类覆盖bean声明，并且仍然可以在类路径上拥有任意数量的其他WebMvcConfigurer实现。
 
 
 
 ## 高级的XML配置
 
-MVC命名空间没有高级模式。如果您需要在bean上自定义一个您无法更改的属性，则可以使用Spring ApplicationContext的BeanPostProcessor生命周期钩子，如以下示例所示：
+MVC命名空间没有高级模式。如果需要在bean上自定义一个无法更改的属性，则可以使用Spring ApplicationContext的BeanPostProcessor生命周期钩子，如以下示例所示：
 
 ```java
 @Component
@@ -670,4 +658,129 @@ public class MyPostProcessor implements BeanPostProcessor {
 }
 ```
 
-请注意，您需要将MyPostProcessor声明为bean，可以在XML中显式声明，也可以通过`<component-scan />`声明来检测它。
+请注意，需要将MyPostProcessor声明为BEAN，可以在XML中显式声明，也可以通过`<component-scan />`声明来检测它。
+
+
+
+----------
+
+## @EnableWebMvc
+
+将此注解添加到@Configuration类可从WebMvcConfigurationSupport导入Spring MVC配置，WebMvcConfigurationSupport是提供MVC Java配置背后的配置主类。
+
+```java
+@EnableWebMvc
+@Configuration
+public class MyWebConfig {
+ .....
+}
+```
+
+如果不使用这个注解，可能最初不会注意到任何差异，但是 content-type和accept header，内容协议将不会生效。
+
+> 这看起来像我们旧的AnnotationMethodHandlerAdapter实现和3.1+ RequestMethodHandlerAdapter之间的差异之一。实际上，出于所有实际目的，您应该始终使用@EnableWebMvc，这将导致我们使用现代基础设施。为了向后兼容基于2.5和3.0的应用程序，如果没有给出明确的配置，DispatcherServlet仍然使用旧的变体。请注意，这将从5.0开始简化，然后删除旧的基础架构。
+
+
+
+如果您使用的是基于XML的配置，那么使用`<mvc:annotation-driven/>`作为@EnableWebMvc的替代方案。@EnableWebMvc和`<mvc:annotation-driven/>`具有相同的目的，混合使用在某些情况下不起作用。
+
+以下是@EnableWebMvc片段：
+
+```java
+package org.springframework.web.servlet.config.annotation;
+ ...
+@Retention(RetentionPolicy.RUNTIME)
+@Target(ElementType.TYPE)
+@Documented
+@Import(DelegatingWebMvcConfiguration.class)
+public @interface EnableWebMvc {
+}
+```
+
+如上所示，EnableWebMvc导入DelegatingWebMvcConfiguration，它是WebMvcConfigurationSupport的子类。
+
+### 如何自定义配置
+
+要自定义@EnableWebMvc导入的配置，我们应该扩展类WebMvcConfigurerAdapter并覆盖我们想要进行相关定制的方法。我们的扩展WebMvcConfigurerAdapter方法在配置阶段从WebMvcConfigurationSupport回调。请注意，WebMvcConfigurerAdapter自5.0以来已被弃用，因此我们应该另外实现WebMvcConfigurer。
+
+
+
+如果重写WebMvcConfigurer对我们不起作用并且我们想要进行一些高级配置，那么我们不应该使用@EnableWebMvc注解。在这种情况下，我们应该直接从WebMvcConfigurationSupport或DelegatingWebMvcConfiguration扩展我们的@Configuration类，并有选择地覆盖包括用@Bean注释的工厂方法的方法。
+
+See also [@EnableWebMvc](http://docs.spring.io/spring/docs/current/javadoc-api/org/springframework/web/servlet/config/annotation/EnableWebMvc.html) for quick examples.
+
+### 如何回调WebMvcConfigurerAdapter？
+
+在配置类中使用@EnableWebMvc，将从DelegatingWebMvcConfiguration进行重要配置。
+
+```java
+@Import(DelegatingWebMvcConfiguration.class)
+  public @interface EnableWebMvc {
+}
+```
+
+DelegatingWebMvcConfiguration是WebMvcConfigurationSupport的子类（它负责新基础架构的所有Spring配置）。配置类DelegatingWebMvcConfiguration具有以下依赖注入：
+
+```java
+@Configuration
+public class DelegatingWebMvcConfiguration extends WebMvcConfigurationSupport {
+   .....
+  @Autowired(required = false)
+  public void setConfigurers(List<WebMvcConfigurer> configurers) {
+   	if (!CollectionUtils.isEmpty(configurers)) {
+		this.configurers.addWebMvcConfigurers(configurers);
+	}
+  }
+}
+```
+
+这意味着如果我们使用WebMvcConfigurerAdapter（WebMvcConfigurer的适配器实现）扩展我们的@Configuration类，那么它也会在上面注入。
+
+在配置期间，在WebMvcConfigurationSupport中使用@Bean注释的各种工厂方法会导致对WebMvcConfigurer实现的回调。例如：
+
+```java
+public class WebMvcConfigurationSupport implements ... {
+    @Bean
+    public HandlerMapping viewControllerHandlerMapping() {
+        ViewControllerRegistry registry = new ViewControllerRegistry();
+        registry.setApplicationContext(this.applicationContext);
+        addViewControllers(registry);
+             ......
+        return handlerMapping;
+    }
+    ....
+    protected void addViewControllers(ViewControllerRegistry registry) {
+    }
+    ....
+}
+```
+
+DelegatingWebMvcConfiguration重写了addViewControllers()方法，最终回调了我们的WebMvcConfigurerAdapter方法：
+
+```java
+ @Configuration
+public class DelegatingWebMvcConfiguration extends WebMvcConfigurationSupport {
+    ...
+    @Override
+	protected void addViewControllers(ViewControllerRegistry registry) {
+	   this.configurers.addViewControllers(registry);
+	}
+    ...
+}
+```
+
+onfigurers是相同的注入列表，正如我们在上面的代码片段中看到的那样。我们的@Configuration类看起来像这样：
+
+```java
+@EnableWebMvc
+@Configuration
+public class MyWebConfig extends WebMvcConfigurerAdapter {
+  .....
+   @Override
+    public void addViewControllers (ViewControllerRegistry registry) {
+        //our customization
+    }
+  ...
+ }
+```
+
