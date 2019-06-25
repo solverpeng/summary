@@ -68,9 +68,41 @@ public class WebConfig {
 
 > **不论是何种方式的映射方式，目的都是为了缩小请求映射范围**
 
-可以使用`@RequestMapping`注解将请求映射到控制器方法。它具有多种属性，可以通过URL、HTTP方法、请求参数、标头和媒体类型进行匹配。也可以在类级别使用它来表示共享映射，或者在方法级别使用它来缩小到特定端点映射的范围。
+可以使用`@RequestMapping`注解将请求映射到控制器方法。@RequestMapping具有多种属性且都是可选的，可以通过URL、HTTP方法、请求参数、标头和媒体类型进行匹配。
 
-`@RequestMapping`还有一些特定的`HTTP`方法的快捷方式变体：
+@RequestMapping注解使用 @Target({ElementType.TYPE, ElementType.METHOD}) 进行标识，因此可以在类级别或方法级别使用它。
+
+如果@RequestMapping指定类级别的路径，则方法中的所有路径都是相对于类级别的。
+
+类级别的@RequestMapping不是必须的。没有它，所有路径都是绝对的，而不是相对的。没有@RequestMapping的处理方法将不会被映射，即使它们所在类具有@Controller和有效的@RequestMapping类级别的注解。
+
+```java
+public @interface RequestMapping {
+    String name() default "";
+
+    @AliasFor("path")
+    String[] value() default {};
+
+    @AliasFor("value")
+    String[] path() default {};
+
+    RequestMethod[] method() default {};
+
+    String[] params() default {};
+
+    String[] headers() default {};
+
+    String[] consumes() default {};
+
+    String[] produces() default {};
+}
+```
+
+
+
+### 快捷方式变体
+
+`@RequestMapping`还有一些特定的 HTTP 方法的快捷方式变体：
 
 - `@GetMapping`
 - `@PostMapping`
@@ -78,7 +110,9 @@ public class WebConfig {
 - `@DeleteMapping`
 - `@PatchMapping`
 
-快捷方式是提供的自定义注解，大多数控制器方法应该映射到特定的HTTP方法，而不是使用`@RequestMapping`，默认情况下，它与所有HTTP方法匹配。同样，在类级别仍然需要`@RequestMapping`来表示共享映射。下面的例子展示了类和方法级别的映射：
+快捷方式是提供的自定义注解，大多数控制器方法应该映射到特定的HTTP方法，而不是使用`@RequestMapping`，默认情况下，@RequestMapping与所有HTTP方法匹配。
+
+这些特定的快捷方式变体只能使用在方法级别。在类级别仍然需要`@RequestMapping`来表示共享映射。下面的例子展示了类和方法级别的映射：
 
 ```java
 @RestController
@@ -98,7 +132,241 @@ class PersonController {
 }
 ```
 
-### URI规则
+
+
+### String[] value
+
+1. URL映射表达式：
+
+    ```java
+    @RequestMapping("/users")
+    @Controller
+    public class UserController{
+        ...
+    }
+    ```
+
+2. 可以指定多个URL：
+
+    ```java
+    @RequestMapping({"/users", "/clients"})
+    @Controller
+    public class UserController{
+        ...
+    }
+    ```
+
+3. 也可以包含[URI templates](https://www.logicbig.com/quick-info/web/uri-template.html)：
+
+    ```java
+    @RequestMapping("/users")
+    @Controller
+    public class UserController{
+        @RequestMapping("/{userId}")
+        public String handle(....){
+            ....
+        }
+    }
+    ```
+
+    handle()方法将映射"/users/{userId}"请求。
+
+4. URI模板模式可能包含正则表达式：
+    `@RequestMapping("/{userId:[0-9]+}")`
+
+5. 尽管拥有类级别的@RequestMapping注解，若方法级别没有使用@RequestMapping注解，这个方法也不会被映射。如下：
+
+    ```java
+     @Controller
+     @RequestMapping("/users")
+     public class UserController {
+    
+         public String handleAllUsersRequest(){
+             .....
+         }
+     }
+    ```
+
+    对于`/users`的请求，将会返回404的错误信息。
+
+    修复上面的映射：
+
+    ```java
+    @Controller
+    @RequestMapping("/users")
+    public class UserController {
+        @RequestMapping
+        public String handleAllUsersRequest(){
+            .....
+        }
+    }
+    ```
+
+在类级别@RequestMapping()或只是@RequestMapping将映射到根（"/"）URL。
+
+如果在类级别没有使用@RequestMapping注解，则在方法级别使用@RequestMapping(“”)将映射到根URL(“/”)，而空@RequestMapping将映射所有不可用的URL。
+
+
+
+### RequestMethod[] method()
+
+对于HTTP请求方法，处理器方法都能进行支持：
+
+```java
+@Controller
+@RequestMapping("/users")
+public class UserController {
+
+   @RequestMapping(value= "{id}", method = {RequestMethod.GET, RequestMethod.DELETE})
+   public String handle(......){
+     //..
+   }
+}
+```
+
+根据良好的设计原则，最好根据HTTP方法定义单独的处理方法。
+
+可以基于不同的HTTP方法唯一地定义不同的处理程序方法，即使它们具有相同的请求URL路径：
+
+```java
+@Controller
+@RequestMapping("/users")
+public class UserController {
+
+   @RequestMapping(value= "{id}", method = {RequestMethod.GET})
+   public String handleGet(.....){
+     //..
+   }
+
+   @RequestMapping(value= "{id}", method = {RequestMethod.DELETE})
+   public String handleDelete(.....){
+     //..
+   }
+
+}
+```
+
+
+
+### String[] params()
+
+映射查询字符串参数。可以根据请求参数条件缩小请求映射范围。
+
+只有再查询字符串匹配时，才会映射带注解的方法。
+
+测试是否存在请求参数`myParam`，不存在`!myParam`或者特定值`myParam=myValue`。
+
+```java
+@GetMapping(path = "/pets/{petId}", params = "myParam=myValue") 
+public void findPet(@PathVariable String petId) {
+    // ...
+}
+```
+
+测试`myParam`是否等于`myValue`。
+
+
+
+不必使用@RequestParam捕获查询参数，因为只有当params匹配时才会调用每个方法，这意味着我们可以安全地在处理方法中使用硬编码的param值。
+
+定义多个查询参数：
+
+```java
+@Controller
+@RequestMapping("/users")
+public class UserControllerParams {
+
+    @RequestMapping(params = {"state=TX", "dept=IT"})
+    public String handleRequest(.....) {
+         ....
+        return "view-name";
+    }
+}
+```
+
+
+
+### String[] headers()
+
+与 params 类型，但使用的是指定的请求头键值对。
+
+```java
+@GetMapping(path = "/pets", headers = "myHeader=myValue") 
+public void findPet(@PathVariable String petId) {
+    // ...
+}
+```
+
+测试`myHeader`标头是否等于`myValue`。
+
+可以将`Content-Type`和`Accept`与`headers`条件匹配，但最好使用consume和`produces`替代。
+
+
+
+### String[] consumes()
+
+映射请求可消费的媒体类型。可以根据请求的`Content-Type`缩小请求映射，必须指定请求的`Content-Type`，否则不能映射，如下：
+
+```java
+@PostMapping(path = "/pets", consumes = MediaType.APPLICATION_JSON_VALUE) 
+public void addPet(@RequestBody Pet pet) {
+    // ...
+}
+```
+
+使用`consumes`属性来缩小内容类型的映射范围。还支持否定表达式，如`!text/plain`表示除`text/plain`之外的任何内容类型。
+
+可以在类级别声明共享使用该属性。方法级别的使用该属性会覆盖类级别的声明。
+
+`MediaType`为常用媒体类型提供常量，例如`APPLICATION_JSON_VALUE`和`APPLICATION_XML_VALUE`。
+
+
+
+### String[] produces()
+
+映射请求可生产的媒体类型。可以根据`Accept`请求头和控制器方法生成的内容类型列表来缩小请求映射，不是必须指定请求的`Accept`，如不指定，也会根据`produces`值进行映射，如下：
+
+```java
+@GetMapping(path = "/pets/{petId}", produces = MediaType.APPLICATION_JSON_VALUE) 
+@ResponseBody
+public Pet getPet(@PathVariable String petId) {
+    // ...
+}
+```
+
+使用`produce`属性来缩小内容类型的映射。
+
+媒体类型可以指定字符集。也支持否定表达式。
+
+对于JSON内容类型，即使`RFC7159`明确指出“不需要定义charset参数”，也应指定UTF-8字符集，因为某些浏览器要求它正确解释UTF-8特殊字符。
+
+同样也可以在类级别声明使用该属性。方法级别的使用该属性会覆盖类级别的声明。
+
+
+
+### String[] path()
+
+value的别名。支持Ant风格的路径匹配。基于**URI模式**匹配。
+
+
+
+### String name
+
+指定映射该请求的名称。
+
+
+
+### Placeholders in path pattern
+
+@RequestMapping的value属性可以使用占位符`${...}`模式，用于从资源文件中获取内容。
+
+
+
+### URI模式
+
+可以与@RequestMapping#value或@RequestMapping#path 一起使用。
+
+Spring使用 AntPathMatcher 进行URI模式匹配。
 
 1. 使用通配符映射请求
    - ? 匹配一个字符
@@ -162,76 +430,15 @@ Spring MVC 使用`PathMatcher`和Spring-core的`AntPathMatcher`实现进行URL�
 
 基于URL的内容协议仍然有用（例如，在浏览器中键入URL时）。为了实现这一点，我们建议使用基于查询参数的策略，以避免文件扩展名带来的大多数问题。或者，如果必须使用文件扩展名，请考虑通过`ContentNegotiationConfigurer`的`MediaTypes`属性将它们限制为显式注册的扩展名列表。
 
-### 可消费的媒体类型
 
-可以根据请求的`Content-Type`缩小请求映射，必须指定请求的`Content-Type`，否则不能映射，如下：
-
-```java
-@PostMapping(path = "/pets", consumes = "application/json") 
-public void addPet(@RequestBody Pet pet) {
-    // ...
-}
-```
-
-使用`consumes`属性来缩小内容类型的映射范围。还支持否定表达式，如`!text/plain`表示除`text/plain`之外的任何内容类型。
-
-可以在类级别声明共享使用该属性。方法级别的使用该属性会覆盖类级别的声明。
-
-`MediaType`为常用媒体类型提供常量，例如`APPLICATION_JSON_VALUE`和`APPLICATION_XML_VALUE`。
-
-### 可生产的媒体类型
-
-可以根据`Accept`请求头和控制器方法生成的内容类型列表来缩小请求映射，不是必须指定请求的`Accept`，如不指定，也会根据`produces`值进行映射，如下：
-
-```java
-@GetMapping(path = "/pets/{petId}", produces = "application/json;charset=UTF-8") 
-@ResponseBody
-public Pet getPet(@PathVariable String petId) {
-    // ...
-}
-```
-
-使用`produce`属性来缩小内容类型的映射。
-
-媒体类型可以指定字符集。也支持否定表达式。
-
-对于JSON内容类型，即使`RFC7159`明确指出“不需要定义charset参数”，也应指定UTF-8字符集，因为某些浏览器要求它正确解释UTF-8特殊字符。
-
-同样也可以在类级别声明使用该属性。方法级别的使用该属性会覆盖类级别的声明。
-
-### 请求参数和标头
-
-可以根据请求参数条件缩小请求映射范围。测试是否存在请求参数（`myParam`），不存在（`!myParam`）或者特定值（`myParam=myValue`）。
-
-```java
-@GetMapping(path = "/pets/{petId}", params = "myParam=myValue") 
-public void findPet(@PathVariable String petId) {
-    // ...
-}
-```
-
-测试`myParam`是否等于`myValue`。
-
-标头也与请求参数类似。
-
-```java
-@GetMapping(path = "/pets", headers = "myHeader=myValue") 
-public void findPet(@PathVariable String petId) {
-    // ...
-}
-```
-
-测试`myHeader`标头是否等于`myValue`。
-
-可以将`Content-Type`和`Accept`与`headers`条件匹配，但最好使用consume和`produces`替代。
 
 ### 自定义注解
 
-Spring MVC还支持 使用自定义请求匹配逻辑的 自定义请求映射属性。这是一个更高级的选项，需要继承`RequestMappingHandlerMapping`并覆盖`getCustomMethodCondition`方法，您可以在其中检查自定义属性并返回自己的`RequestCondition`。
+Spring MVC还支持 使用自定义请求匹配逻辑的自定义请求映射属性。这是一个更高级的选项，需要继承`RequestMappingHandlerMapping`并覆盖`getCustomMethodCondition`方法，可以在其中检查自定义属性并返回自己的`RequestCondition`。
 
 ### 明确的注册
 
-可以以编程方式注册处理程序方法，您可以将其用于动态注册或高级情况，例如不同URL下的同一处理程序的不同实例，如下：
+可以以编程方式注册处理程序方法，可以将其用于动态注册或高级情况，例如不同URL下的同一处理程序的不同实例，如下：
 
 ```java
 @Configuration
@@ -407,6 +614,137 @@ public void findPet(
 > 
 >
 > 在MVC XML命名空间中，可以设置`<mvc：annotation-driven enable-matrix-variables ="true"/>`。
+
+
+
+### @PathVariable
+
+@PathVariable注解与处理方法参数一起使用以捕获URI模板变量的值。
+
+也可以使用在类级别。
+
+#### 带有变量名的@PathVariable
+
+@PathVariable只有一个属性'value'，用于定义URI模板变量名。
+
+```java
+@Controller
+@RequestMapping("users")
+public class UserController {
+
+    @RequestMapping("{id}")
+    public String handleRequest (@PathVariable("id") String userId, Model map) {
+        map.addAttribute("msg", "User id " + userId);
+        return "my-page";
+    }
+}
+```
+
+#### 没有变量名的@PathVariable
+
+@PathVariable的'value'属性是可选的。如果URI模板变量名称与方法参数名称匹配，则可以跳过设置@PathVariable的`value`属性值。
+
+```java
+@Controller
+@RequestMapping("users")
+public class UserController {
+
+    @RequestMapping("profiles/{userName}")
+    public String handleRequest2 (@PathVariable String userName, Model model) {
+        model.addAttribute("msg", "user profile name : " + userName);
+        return "my-page";
+    }
+}
+```
+
+#### 使用多个@PathVariable注解
+
+一个方法可以包含任意数量的@PathVariable注解。
+
+```java
+@Controller
+@RequestMapping("users")
+public class UserController {
+
+    @RequestMapping("{id}/posts/{postId}")
+    public String handleRequest3 (@PathVariable("id") String userId,
+                                  @PathVariable("postId") String postId,
+                                  Model model) {
+        model.addAttribute("msg", "user id : " + userId + ", post id: " + postId);
+        return "my-page";
+
+    }
+}
+```
+
+#### 多个变量使用@PathVariable的Map
+
+如果方法参数是Map<String,String>或MultiValueMap<String,String>，则会使用所有路径变量名称和值填充映射。
+
+```java
+@Controller
+@RequestMapping("users")
+public class UserController {
+
+    @RequestMapping("{id}/messages/{msgId}")
+    public String handleRequest4 (@PathVariable Map<String, String> varsMap, Model model) {
+        model.addAttribute("msg", varsMap.toString());
+        return "my-page";
+    }
+}
+```
+
+#### 相同请求不同变量名称存在歧义
+
+```java
+@Controller
+@RequestMapping("/employees")
+public class EmployeeController {
+
+    @RequestMapping("{id}")
+    public String handleRequest(@PathVariable("id") String userId, Model model){
+        model.addAttribute("msg", "employee id: "+userId);
+        return "my-page";
+    }
+
+   @RequestMapping("{employeeName}")
+    public String handleRequest2 (@PathVariable("employeeName") String userName,
+                                                                   Model model) {
+        model.addAttribute("msg", "employee name : " + userName);
+        return "my-page";
+    }
+}
+```
+
+对于相同的请求 "/employees/234"，无法判断该映射哪个请求。
+
+
+
+#### 在模板变量中使用正则避免歧义
+
+如果在@RequestMapping中使用互斥的正则表达式，那么Spring可以根据请求选择一个进行匹配，尽管使用的是相同的请求。
+
+```java
+@Controller
+@RequestMapping("/dept")
+public class DeptController {
+
+    @RequestMapping("{id:[0-9]+}")
+    public String handleRequest(@PathVariable("id") String userId, Model model){
+        model.addAttribute("msg", "profile id: "+userId);
+        return "my-page";
+
+    }
+
+    @RequestMapping("{name:[a-zA-Z]+}")
+    public String handleRequest2 (@PathVariable("name") String deptName, Model model) {
+        model.addAttribute("msg", "dept name : " + deptName);
+        return "my-page";
+    }
+}
+```
+
+
 
 
 

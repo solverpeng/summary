@@ -709,6 +709,8 @@ public @interface EnableWebMvc {
 
 See also [@EnableWebMvc](http://docs.spring.io/spring/docs/current/javadoc-api/org/springframework/web/servlet/config/annotation/EnableWebMvc.html) for quick examples.
 
+
+
 ### 如何回调WebMvcConfigurerAdapter？
 
 在配置类中使用@EnableWebMvc，将从DelegatingWebMvcConfiguration进行重要配置。
@@ -769,7 +771,7 @@ public class DelegatingWebMvcConfiguration extends WebMvcConfigurationSupport {
 }
 ```
 
-onfigurers是相同的注入列表，正如我们在上面的代码片段中看到的那样。我们的@Configuration类看起来像这样：
+configurers是相同的注入列表，正如我们在上面的代码片段中看到的那样。我们的@Configuration类看起来像这样：
 
 ```java
 @EnableWebMvc
@@ -784,3 +786,102 @@ public class MyWebConfig extends WebMvcConfigurerAdapter {
  }
 ```
 
+## SpringServletContainerInitializer
+
+SpringServletContainerInitializer类实现了 [ServletContainerInitializer](https://www.logicbig.com/tutorials/java-ee-tutorial/java-servlet/servlet-container-initializer-example.html)接口。这意味着这个类将被加载，并且在Servlet容器（版本3.0+）启动期间将调用其onStartup()方法，因为类路径上存在spring-web模块JAR。
+
+### WebApplicationInitializer
+
+SpringServletContainerInitializer被@HandlesTypes(WebApplicationInitializer.class)注解标注。这意味着，它的onStartup()方法与实现WebApplicationInitializer的所有类（在类路径上）一起传递。Spring将初始化所有这些具体类，并将调用其WebApplicationInitializer#onStartup(servletContext)方法。这些类可以在onStartup()方法中自由地进行任何编程servlet组件注册和初始化。
+
+### Spring抽象WebApplicationInitializer实现
+
+Spring还提供了此接口的抽象实现：AbstractDispatcherServletInitializer和AbstractAnnotationConfigDispatcherServletInitializer，它们已经注册了DispatcherServlet。其中一个抽象类的客户端实现可以进一步自定义注册过程。
+
+
+
+AbstractAnnotationConfigDispatcherServletInitializer还初始化AnnotationConfigWebApplicationContext。客户端代码需要提供客户端配置类。以下代码段显示了如何实现其抽象方法：
+
+```java
+public class AppInitializer extends
+          AbstractAnnotationConfigDispatcherServletInitializer {
+
+    @Override
+    protected Class<?>[] getRootConfigClasses () {
+        return new Class<?>[]{MyAppConfig.class};
+    }
+
+    @Override
+    protected Class<?>[] getServletConfigClasses () {
+        return null;
+    }
+
+    @Override
+    protected String[] getServletMappings () {
+        return new String[]{"/"};
+    }
+
+```
+
+## 使用Spring 5.0 WebMvcConfigurer默认方法
+
+从Spring 5.0开始，WebMvcConfigurer具有Java 8默认方法。这意味着，对于MVC配置，我们可以直接实现此接口，而无需扩展WebMvcConfigurerAdapter（在5.0中已弃用）。
+
+示例：实现WebMvcConfigurer接口
+
+```java
+@EnableWebMvc
+@Configuration
+@ComponentScan
+public class MyWebConfig implements WebMvcConfigurer {
+
+  @Override
+  public void configureViewResolvers(ViewResolverRegistry registry) {
+      registry.jsp("/WEB-INF/views/", ".jsp");
+  }
+
+  @Override
+  public void addViewControllers(ViewControllerRegistry registry) {
+      //this will map uri to jsp view directly without a controller
+      registry.addViewController("/hi")
+              .setViewName("hello");
+  }
+}
+```
+
+## 什么是DispatcherServlet.propertie?
+
+DispatcherServlet.properties包含DispatcherServlet使用的默认策略对象/处理器列表。以下是5.1.8的内容：
+
+```properties
+# Default implementation classes for DispatcherServlet's strategy interfaces.
+# Used as fallback when no matching beans are found in the DispatcherServlet context.
+# Not meant to be customized by application developers.
+
+org.springframework.web.servlet.LocaleResolver=org.springframework.web.servlet.i18n.AcceptHeaderLocaleResolver
+
+org.springframework.web.servlet.ThemeResolver=org.springframework.web.servlet.theme.FixedThemeResolver
+
+org.springframework.web.servlet.HandlerMapping=org.springframework.web.servlet.handler.BeanNameUrlHandlerMapping,\
+	org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping
+
+org.springframework.web.servlet.HandlerAdapter=org.springframework.web.servlet.mvc.HttpRequestHandlerAdapter,\
+	org.springframework.web.servlet.mvc.SimpleControllerHandlerAdapter,\
+	org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerAdapter
+
+org.springframework.web.servlet.HandlerExceptionResolver=org.springframework.web.servlet.mvc.method.annotation.ExceptionHandlerExceptionResolver,\
+	org.springframework.web.servlet.mvc.annotation.ResponseStatusExceptionResolver,\
+	org.springframework.web.servlet.mvc.support.DefaultHandlerExceptionResolver
+
+org.springframework.web.servlet.RequestToViewNameTranslator=org.springframework.web.servlet.view.DefaultRequestToViewNameTranslator
+
+org.springframework.web.servlet.ViewResolver=org.springframework.web.servlet.view.InternalResourceViewResolver
+
+org.springframework.web.servlet.FlashMapManager=org.springframework.web.servlet.support.SessionFlashMapManager
+```
+
+### 如何使用DispatcherServlet.properties？
+
+DispatcherServlet在类加载期间加载这些属性。
+
+在初始化不同策略（DispatcherServlet#initStrategies()）期间，DispatcherServlet会逐个检查这些策略是否已经注册；如果没有，它使用DispatcherServlet.properties设置的策略。这意味着如果我们在应用程序中注册不同的策略BEAN（如HandlerMapping, HandlerAdapter等）或者通过使用@EnableWebMvc等其他方式，不会使用DispatcherServlet.properties中列出的策略。
