@@ -53,7 +53,7 @@ public class ThymeleafProperties {
 
 
 
-默认情况下，Thymeleaf 的缓存是开启的，在开发阶段关闭缓存。在著配置类中添加如下配置信息：`spring.thymeleaf.cache=false`。
+默认情况下，Thymeleaf 的缓存是开启的，在开发阶段关闭缓存。在主配置类中添加如下配置信息：`spring.thymeleaf.cache=false`。
 
 
 
@@ -129,7 +129,7 @@ public class HelloController {
 | th:fragment | 布局标签，定义一个代码片段，方便其它地方引用 | <div th:fragment="alert">                                    |
 | th:include  | 布局标签，替换内容到引入的文件               | <head th:include="layout :: htmlhead" th:with="title='xx'"></head> |
 | th:replace  | 布局标签，替换整个标签到引入的文件           | <div th:replace="fragments/header :: title"></div>           |
-| th:selected | selected选择框 选中                          | th:selected="(${xxx.id} == ${configObj.dd})"                 |
+| th:selected | selected选择框 选中                          | `th:selected="(${xxx.id} == ${configObj.dd})"`               |
 | th:src      | 图片类地址引入                               | <img class="img-responsive" alt="App Logo" th:src="@{/img/logo.png}" /> |
 | th:inline   | 定义js脚本可以使用变量                       | <script type="text/javascript" th:inline="javascript">       |
 | th:action   | 表单提交的地址                               | <form action="subscribe.html" th:action="@{/subscribe}">     |
@@ -254,7 +254,8 @@ URL表达式指的是把一个有用的上下文或会话信息添加到URL，�
 Thymeleaf中使用th:if和th:unless属性进行条件判断，下面的例子中，`<a>`标签只有在`th:if`中条件成立时才显示：
 
 ```xml
-<a th:if="${myself=='yes'}" ></a><a th:unless=${session.user != null} th:href="@{/login}" >Login</a>
+<a th:if="${myself=='yes'}" ></a>
+<a th:unless=${session.user != null} th:href="@{/login}" >Login</a>
 ```
 
 th:unless于th:if恰好相反，只有表达式中的条件不成立，才会显示其内容。

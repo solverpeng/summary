@@ -4,7 +4,7 @@ Spring Boot Web是以 `WebMvcAutoConfiguration`作为入口进行配置的。几
 
 # 静态资源
 
-Spring Boot 有两种处理静态资源的方式。一种是第三方静态资源文件如何映射，另一种是我们自己的静态资源包改如何映射。Spring Boot 在 `WebMvcAutoConfiguration` 给出了说明，如下：
+Spring Boot 有两种处理静态资源的方式。一种是第三方静态资源文件如何映射，另一种是我们自己的静态资源包该如何映射。Spring Boot 在 `WebMvcAutoConfiguration` 给出了说明，如下：
 
 ```java
 public void addResourceHandlers(ResourceHandlerRegistry registry) {
